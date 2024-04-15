@@ -96,7 +96,20 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 		} else {
 			log.Printf("Message deleted successfully.")
 		}
+
+		// non josh processing
+
 	} else {
 		// handle josh message !
+
+		/*
+			will send a POST request to an internal api about new josh message
+
+			features of api:
+			- POST: new josh msg
+			- POST: update member list (member left, member joined)
+			- POST: non-joshes deleted
+			- GET: josh of the week
+		*/
 	}
 }
