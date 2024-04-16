@@ -1,13 +1,18 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -20,7 +25,10 @@ var (
 // hardcoded server ID; allows testing on other server
 // might be a better way to do this
 const (
-	GuildID = "715798257661509743"
+	GuildID         = "715798257661509743"
+	ApiURL          = "http://localhost:5000"
+	AddUserEndpoint = "/api/v1/joshjoin"
+	NewMsgEndpoint  = "/api/v1/newjosh"
 )
 
 func init() {
@@ -56,6 +64,7 @@ func main() {
 	dg.Identify.Intents = discordgo.IntentGuildMessages | discordgo.IntentGuildMembers
 
 	dg.AddHandler(messageCreate)
+	dg.AddHandler(userJoin)
 
 	err = dg.Open()
 	if err != nil {
@@ -73,8 +82,10 @@ func main() {
 }
 
 func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate) {
-	if message.GuildID != GuildID {
-		return
+	reqData := NewUserMessage{
+		UserID:        message.Author.ID,
+		UnixTimestamp: time.Now().Unix(),
+		JoshInt:       0,
 	}
 
 	if strings.ToLower(message.Content) != "josh" {
@@ -96,20 +107,38 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 		} else {
 			log.Printf("Message deleted successfully.")
 		}
-
-		// non josh processing
-
 	} else {
-		// handle josh message !
-
-		/*
-			will send a POST request to an internal api about new josh message
-
-			features of api:
-			- POST: new josh msg
-			- POST: update member list (member left, member joined)
-			- POST: non-joshes deleted
-			- GET: josh of the week
-		*/
+		reqData.JoshInt = 1
 	}
+
+	json, err := json.Marshal(reqData)
+	if err != nil {
+		log.Printf("Error marshalling json data: %s", err.Error())
+		return
+	}
+
+	resp, err := http.Post(ApiURL+NewMsgEndpoint, "application/json", bytes.NewBuffer(json))
+	if err != nil {
+		log.Printf("Error creating api request: %s", err.Error())
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		buf := new(strings.Builder)
+		_, err := io.Copy(buf, resp.Body)
+		if err != nil {
+			log.Printf("Couldn't read request response: %s", err.Error())
+		}
+
+		log.Printf("Status code %d, server responded with: %s", resp.StatusCode, buf.String())
+	} else {
+		log.Printf("Success: %s's josh event sent to API", message.Author.Username)
+	}
+}
+
+// When a user joins, they will be assigned the josh role and this information will be
+// communicated to the API.
+func userJoin(session *discordgo.Session, newUser *discordgo.GuildMemberAdd) {
+
 }
