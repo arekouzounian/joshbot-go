@@ -66,6 +66,7 @@ func main() {
 
 	dg.AddHandler(messageCreate)
 	dg.AddHandler(userJoin)
+	dg.AddHandler(userUpdate)
 
 	err = dg.Open()
 	if err != nil {
@@ -145,32 +146,47 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 // When a user joins, they will be assigned the josh role and this information will be
 // communicated to the API.
 func userJoin(session *discordgo.Session, newUser *discordgo.GuildMemberAdd) {
+	cast := discordgo.GuildMemberUpdate{
+		Member: newUser.Member,
+	}
+
+	userUpdate(session, &cast)
+}
+
+// server handles duplicates so we can just call the above
+func userUpdate(session *discordgo.Session, update *discordgo.GuildMemberUpdate) {
 	// change their name to josh
 	// give them the josh role
-	if newUser.Nick != "josh" {
-		err := session.GuildMemberNickname(newUser.GuildID, newUser.User.ID, "josh")
+	if update.Nick != "josh" {
+		log.Printf("Non-josh nickname detected on user %s", update.User.Username)
+		err := session.GuildMemberNickname(update.GuildID, update.User.ID, "josh")
 		if err != nil {
 			log.Printf("Error assigning josh nickname: %s", err.Error())
+		} else {
+			log.Printf("Josh nickname established on %s successfully", update.User.Username)
 		}
 	}
 	hasJosh := false
-	for _, roleID := range newUser.Roles {
+	for _, roleID := range update.Roles {
 		if roleID == JOSH_ROLE_ID {
 			hasJosh = true
 		}
 	}
 	if !hasJosh {
-		err := session.GuildMemberRoleAdd(newUser.GuildID, newUser.User.ID, JOSH_ROLE_ID)
+		log.Printf("Josh role not assigned to user %s", update.User.Username)
+		err := session.GuildMemberRoleAdd(update.GuildID, update.User.ID, JOSH_ROLE_ID)
 		if err != nil {
 			log.Printf("Error assigning josh role: %s", err.Error())
+		} else {
+			log.Printf("Josh role assigned to user %s successfully", update.User.Username)
 		}
 	}
 
 	// send api request
 	reqData := JoshUpdateEvent{
-		UserID:   newUser.User.ID,
-		Username: newUser.User.Username,
-		Avatar:   newUser.AvatarURL(""),
+		UserID:   update.User.ID,
+		Username: update.User.Username,
+		Avatar:   update.AvatarURL(""),
 	}
 	json, err := json.Marshal(reqData)
 	if err != nil {
@@ -194,6 +210,6 @@ func userJoin(session *discordgo.Session, newUser *discordgo.GuildMemberAdd) {
 
 		log.Printf("Status code %d, server responded with: %s", resp.StatusCode, buf.String())
 	} else {
-		log.Printf("Success: %s's josh event sent to API", newUser.User.Username)
+		log.Printf("Success: %s's guild update registered with API", update.User.Username)
 	}
 }
