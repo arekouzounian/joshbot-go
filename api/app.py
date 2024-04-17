@@ -1,6 +1,7 @@
 from flask import Flask, request 
 import csv 
 import os 
+import time
 
 app = Flask(__name__)
 
@@ -57,7 +58,7 @@ def newJosh():
     '''
     {
     "userID": "12345" // discord userID of the person who sent the josh 
-    "unixTimestamp": 12345 // unix-time timestamp of when the message was sent
+    " Timestamp": 12345 // unix-time timestamp of when the message was sent
     "joshInt": 1 // 1 if the message was 'josh', 0 otherwise
     }
     '''
@@ -147,4 +148,23 @@ def memberUpdate():
                 
 
 
+# number of seconds since last josh 
+@app.route("/api/v1/lastjosh", methods=['GET'])
+def timeSinceLastJosh():
+    # check log for last josh 
+
+    if os.path.exists(joshTable):
+        timestamp = 0
+        with open(joshTable, mode='r') as csv_file: 
+            reader = csv.reader(csv_file)
+            for line in reader: 
+                pass
+            timestamp = line[0]
+
+        if timestamp == 0: 
+            return 'Error reading table',500
+        
+        return str(int(time.time()) - int(timestamp)), 200
+    else:
+        return 'Josh Table doesn\'t exist', 500
 

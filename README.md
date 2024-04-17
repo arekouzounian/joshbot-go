@@ -8,4 +8,7 @@ Re-write of joshbot in Go. I clearly have too much time.
 
 
 ## Proposed Features
-- ? 
+- time since last josh 
+- average josh time 
+- graph of joshes vs non joshes (josh score ?)
+- josh of the week (uniform distribution) <- POST (bot driven)
