@@ -1,0 +1,1 @@
+curl http://localhost:5000/api/v1/joshupdate --data '{"userID":"'"$RANDOM"'", "username":"ikigag", "avatar":"http://test.url"}' -H "Content-Type: application/json"

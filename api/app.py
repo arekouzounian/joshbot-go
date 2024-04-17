@@ -5,18 +5,29 @@ import os
 app = Flask(__name__)
 
 '''
-userID,12,0 // userID, total joshes, total non-joshes
-userID,1,1 
+userID,ikigag,http://mypfp.url,12,0 // userID, username, avatar url, total joshes, total non-joshes
+userID,ikigag2,http://otherpfp.url,1,1
 ...
 '''
+USER_TABLE_ID_OFFSET = 0
+USER_TABLE_USERNAME_OFFSET = 1
+USER_TABLE_AVATAR_OFFSET = 2
+USER_TABLE_JOSH_OFFSET = 3
+USER_TABLE_NONJOSH_OFFSET = 4
 userTable = './users.csv' # stores user info: userID, number of joshes sent
+USER_TABLE_NUM_FIELDS = 5 # number of fields (columns) in the table 
+
 
 '''
 timestamp,userID,1 // user sent a josh on this timestamp
 timestamp,userID,0 // user sent a non-josh on this timestamp
 ...
 '''
+JOSH_TABLE_TIMESTAMP_OFFSET = 0
+JOSH_TABLE_ID_OFFSET = 1
+JOSH_TABLE_JOSHINT_OFFSET = 2
 joshTable = './joshlog.csv' # basically a log of every josh sent 
+JOSH_TABLE_NUM_FIELDS = 3 # number of fields (columns) in the table 
 
 # slow and hacky but it's all python anyway right 
 def checkFields(fields_arr, json):
@@ -56,75 +67,81 @@ def newJosh():
     if len(missingFields) > 0:
         return missingFieldsErr(missingFields)
     
-    print('asdf')
-    
-
     with open(joshTable, mode='a') as joshlog: 
         writer = csv.writer(joshlog)
         writer.writerow([json['unixTimestamp'], json['userID'], json['joshInt']])
 
-    joshCount = 0 
-    nonJoshCount = 0
+    userRow = -1
+    table = []
     if os.path.exists(userTable):
         with open(userTable, mode='r') as user_table_read: 
             reader = csv.reader(user_table_read)
-            for row in reader: 
-                if row[0] == json['userID']: 
-                    joshCount = int(row[1])
-                    nonJoshCount = int(row[2])
-                    break 
+            table = list(reader)
+            for (i, row) in enumerate(table): 
+                if row[USER_TABLE_ID_OFFSET] == json['userID']: 
+                    userRow = i 
+                    break
+            if userRow < 0: 
+                return "Error: user doesn't exist", 500
+    else: 
+        return "Error: user table doesn't exist", 500
     
     with open(userTable, mode='w') as user_table_write:
         writer = csv.writer(user_table_write)
         if json['joshInt'] == 1: 
-            joshCount += 1
+            table[userRow][USER_TABLE_JOSH_OFFSET] = (int)(table[userRow][USER_TABLE_JOSH_OFFSET]) + 1
         else:
-            nonJoshCount += 1 
+            table[userRow][USER_TABLE_NONJOSH_OFFSET] = (int)(table[userRow][USER_TABLE_NONJOSH_OFFSET]) + 1
 
-        writer.writerow([json['userID'], joshCount, nonJoshCount])
+        writer.writerows(table)
+
+    
     return 'Request success', 200
 
 # whenever a user is added to the server 
 # if a user leaves the server their josh count will remain 
 # if they rejoin it won't be reset 
-@app.route("/api/v1/joshjoin", methods=['POST'])
+@app.route("/api/v1/joshupdate", methods=['POST'])
 def memberUpdate(): 
     '''
     {
     "userID": "12345" // their discord userID
-    "totalUsers": ["userID", "userID", ...] // full list of server userID's 
+    "username: "ikigag" // their discord username 
+    "avatar": "http://cdn.discord.com/pfp.png" 
     }
     '''
 
     json = request.get_json()
-    requiredFields = ['userID', 'totalUsers']
+    requiredFields = ['userID', 'username', 'avatar']
     missingFields = checkFields(requiredFields, json)
     
     if len(missingFields) > 0:
         return missingFieldsErr(missingFields)
 
 
-    # check if file exists, gather all users in table 
-    existing = []
-    if os.path.exists(userTable):
+    userRow = -1
+    table = []
+    if os.path.exists(userTable): 
         with open(userTable, mode='r') as csv_file: 
             reader = csv.reader(csv_file)
-            for row in reader: 
-                existing.append(row[0])
+            table = list(reader)
+            for (i, row) in enumerate(table): 
+                if row[USER_TABLE_ID_OFFSET] == json['userID']:
+                    userRow = i
 
-    # figure out which users we need to add 
-    to_add = []
-    if json['userID'] not in existing: 
-        to_add.append(json['userID'])
-    for user in json['totalUsers']: 
-        if user not in existing: 
-            to_add.append(user)
+    # add default fields if new user 
+    if userRow < 0:
+        table.append(['0'] * USER_TABLE_NUM_FIELDS)
+        table[userRow][USER_TABLE_JOSH_OFFSET] = 0
+        table[userRow][USER_TABLE_NONJOSH_OFFSET] = 0
+    # update relevant info 
+    table[userRow][USER_TABLE_ID_OFFSET] = json['userID']
+    table[userRow][USER_TABLE_USERNAME_OFFSET] = json['username']
+    table[userRow][USER_TABLE_AVATAR_OFFSET] = json['avatar']
 
-    # add all outstanding users to table
-    with open(userTable, mode='a') as csv_file: 
+    with open(userTable, mode='w') as csv_file: 
         writer = csv.writer(csv_file)
-        for user in to_add: 
-            writer.writerow([json['userID'], '0', '0'])
+        writer.writerows(table)
     
     return 'User successfully joined.'
                 
