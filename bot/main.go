@@ -25,10 +25,11 @@ var (
 // hardcoded server ID; allows testing on other server
 // might be a better way to do this
 const (
-	GuildID         = "715798257661509743"
-	ApiURL          = "http://localhost:5000"
-	AddUserEndpoint = "/api/v1/joshjoin"
-	NewMsgEndpoint  = "/api/v1/newjosh"
+	GUILD_ID          = "715798257661509743"
+	JOSH_ROLE_ID      = "716065561385238589"
+	API_URL           = "http://localhost:5000"
+	ADD_USER_ENDPOINT = "/api/v1/joshupdate"
+	NEW_MSG_ENDPOINT  = "/api/v1/newjosh"
 )
 
 func init() {
@@ -82,6 +83,10 @@ func main() {
 }
 
 func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate) {
+	// if message.GuildID != GuildID {
+	// 	return
+	// }
+
 	reqData := NewUserMessage{
 		UserID:        message.Author.ID,
 		UnixTimestamp: time.Now().Unix(),
@@ -117,7 +122,7 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 		return
 	}
 
-	resp, err := http.Post(ApiURL+NewMsgEndpoint, "application/json", bytes.NewBuffer(json))
+	resp, err := http.Post(API_URL+NEW_MSG_ENDPOINT, "application/json", bytes.NewBuffer(json))
 	if err != nil {
 		log.Printf("Error creating api request: %s", err.Error())
 		return
@@ -140,5 +145,55 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 // When a user joins, they will be assigned the josh role and this information will be
 // communicated to the API.
 func userJoin(session *discordgo.Session, newUser *discordgo.GuildMemberAdd) {
+	// change their name to josh
+	// give them the josh role
+	if newUser.Nick != "josh" {
+		err := session.GuildMemberNickname(newUser.GuildID, newUser.User.ID, "josh")
+		if err != nil {
+			log.Printf("Error assigning josh nickname: %s", err.Error())
+		}
+	}
+	hasJosh := false
+	for _, roleID := range newUser.Roles {
+		if roleID == JOSH_ROLE_ID {
+			hasJosh = true
+		}
+	}
+	if !hasJosh {
+		err := session.GuildMemberRoleAdd(newUser.GuildID, newUser.User.ID, JOSH_ROLE_ID)
+		if err != nil {
+			log.Printf("Error assigning josh role: %s", err.Error())
+		}
+	}
 
+	// send api request
+	reqData := JoshUpdateEvent{
+		UserID:   newUser.User.ID,
+		Username: newUser.User.Username,
+		Avatar:   newUser.AvatarURL(""),
+	}
+	json, err := json.Marshal(reqData)
+	if err != nil {
+		log.Printf("Error marshalling json: %s", err.Error())
+		return
+	}
+
+	resp, err := http.Post(API_URL+ADD_USER_ENDPOINT, "application/json", bytes.NewBuffer(json))
+	if err != nil {
+		log.Printf("Error creating API request: %s", err.Error())
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		buf := new(strings.Builder)
+		_, err := io.Copy(buf, resp.Body)
+		if err != nil {
+			log.Printf("Couldn't read request response: %s", err.Error())
+		}
+
+		log.Printf("Status code %d, server responded with: %s", resp.StatusCode, buf.String())
+	} else {
+		log.Printf("Success: %s's josh event sent to API", newUser.User.Username)
+	}
 }
