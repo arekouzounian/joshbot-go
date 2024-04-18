@@ -1,9 +1,12 @@
-from flask import Flask, request 
+from flask import Flask, request, jsonify 
+import schedule 
 import csv 
 import os 
 import time
+import random
 
 app = Flask(__name__)
+
 
 '''
 userID,ikigag,http://mypfp.url,12,0 // userID, username, avatar url, total joshes, total non-joshes
@@ -29,6 +32,15 @@ JOSH_TABLE_ID_OFFSET = 1
 JOSH_TABLE_JOSHINT_OFFSET = 2
 joshTable = './joshlog.csv' # basically a log of every josh sent 
 JOSH_TABLE_NUM_FIELDS = 3 # number of fields (columns) in the table 
+
+JOSH_OTW_TABLE_ID_OFFSET = 0 
+JOSH_OTW_TABLE_USERNAME_OFFSET = 1
+JOSH_OTW_TABLE_AVATAR_OFFSET = 2 
+JOSH_OTW_TABLE_JOSH_OFFSET = 3 
+JOSH_OTW_TABLE_NONJOSH_OFFSET = 4
+joshOfTheWeekTable = './joshOTW.csv'
+JOSH_OTW_TABLE_NUM_FIELDS = 5
+
 
 # slow and hacky but it's all python anyway right 
 def checkFields(fields_arr, json):
@@ -159,7 +171,7 @@ def timeSinceLastJosh():
             reader = csv.reader(csv_file)
             for line in reader: 
                 pass
-            timestamp = line[0]
+            timestamp = line[JOSH_TABLE_TIMESTAMP_OFFSET]
 
         if timestamp == 0: 
             return 'Error reading table',500
@@ -168,3 +180,86 @@ def timeSinceLastJosh():
     else:
         return 'Josh Table doesn\'t exist', 500
 
+
+
+# check average joshes per day over last 30 days 
+@app.route("/api/v1/joshavg", methods=['GET'])
+def joshAvg(): 
+    if not os.path.exists(joshTable):
+        return 'Josh Table doesn\'t exist', 500 
+    
+    josh_avg = 0 
+    non_josh_avg = 0
+
+    thirty_days_ago = int(time.time()) - (30 * 24 * 3600)
+    with open(joshTable, mode='r') as csv_file: 
+        reader = csv.reader(csv_file)
+        for row in reader: 
+            if int(row[JOSH_TABLE_TIMESTAMP_OFFSET]) < thirty_days_ago:
+                continue 
+
+            if row[JOSH_TABLE_JOSHINT_OFFSET] == '0': 
+                non_josh_avg += 1
+            else: 
+                josh_avg += 1 
+    
+    josh_avg /= 30 
+    non_josh_avg /= 30 
+
+    return jsonify([josh_avg, non_josh_avg]), 200 
+
+@app.route("/api/v1/joshcount/<userid>")
+def getJoshes(userid): 
+    if not os.path.exists(userTable):
+        return 'User table doesn\'t exist!'
+    
+    with open(userTable, 'r') as csv_file: 
+        reader = csv.reader(csv_file)
+        for row in reader:
+            if row[USER_TABLE_ID_OFFSET] == userid:
+                return jsonify([row[USER_TABLE_JOSH_OFFSET], row[USER_TABLE_NONJOSH_OFFSET]]), 200
+    
+    return 'User doesn\'t exist!', 500
+
+
+# picks a new josh of the week 
+@app.route('/api/v1/test')
+def joshOfTheWeek(): 
+    # pick a new josh 
+    if not os.path.exists(userTable): 
+        return 'User table doesn\'t exist!', 500
+    
+    row = []
+    with open(userTable, 'r') as c: 
+        reader = csv.reader(c)
+        lines = list(reader)
+        row = random.choice(lines)
+
+        # check for duplicate josh 
+        if os.path.exists(joshOfTheWeekTable):
+            with open(joshOfTheWeekTable, 'r') as j:
+                first_line = next(csv.reader(j))
+                # bogosort-like maneuver
+                while row == first_line:
+                    row = random.choice(lines)
+
+
+
+    with open(joshOfTheWeekTable, 'w') as j: 
+        line = ''
+        for i, item in enumerate(row):
+            line += item
+            if i != len(row) - 1:
+                line += ','
+
+        line += '\n'
+
+        j.write(line)
+
+    return line, 200
+
+
+
+
+
+schedule.every().week.do(joshOfTheWeek)
