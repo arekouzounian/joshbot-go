@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify 
+from flask_cors import CORS
 import schedule 
 import csv 
 import os 
@@ -6,6 +7,7 @@ import time
 import random
 
 app = Flask(__name__)
+CORS(app)
 
 
 '''
@@ -208,10 +210,11 @@ def joshAvg():
 
     return jsonify([josh_avg, non_josh_avg]), 200 
 
+# get number of joshes, nonjoshes for an individual user 
 @app.route("/api/v1/joshcount/<userid>")
 def getJoshes(userid): 
     if not os.path.exists(userTable):
-        return 'User table doesn\'t exist!'
+        return 'User table doesn\'t exist!', 500
     
     with open(userTable, 'r') as csv_file: 
         reader = csv.reader(csv_file)
@@ -220,6 +223,30 @@ def getJoshes(userid):
                 return jsonify([row[USER_TABLE_JOSH_OFFSET], row[USER_TABLE_NONJOSH_OFFSET]]), 200
     
     return 'User doesn\'t exist!', 500
+
+
+# board_len = number of entries in the leaderboard
+# sort_key = lambda expression for how the entries should be sorted 
+def getBoard(board_len, sort_key): 
+    if not os.path.exists(userTable):
+        return 'User table doesn\'t exist!', 500
+    
+    with open(userTable, 'r') as c: 
+        reader = csv.reader(c)
+        users = list(reader)
+        users.sort(key=sort_key, reverse=True)
+        return jsonify(users if len(users) < board_len else users[:board_len]), 200
+    
+
+# get top 5 users by josh count 
+@app.route("/api/v1/joshboard")
+def getLeaderboard(): 
+    return getBoard(5, lambda x: int(x[USER_TABLE_JOSH_OFFSET]))
+    
+# get top 5 users by non josh count 
+@app.route("/api/v1/joshofshame")
+def getWallOfShame(): 
+    return getBoard(5, lambda x: int(x[USER_TABLE_NONJOSH_OFFSET]))
 
 
 # picks a new josh of the week 

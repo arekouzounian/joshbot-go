@@ -1,8 +1,13 @@
-.App {
+body {
   text-align: center;
+  background-color: #31304c; 
 }
 
-.App-logo {
+.leaderboardsWrapper {
+  display:inline;
+}
+
+/* .App-logo {
   height: 40vmin;
   pointer-events: none;
 }
@@ -35,4 +40,4 @@
   to {
     transform: rotate(360deg);
   }
-}
+} */
