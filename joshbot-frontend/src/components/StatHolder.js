@@ -48,16 +48,17 @@ function StatHolder(props) {
     const [avg, setAvg] = useState([]);
     const [seconds, setSeconds] = useState("Loading...");
 
-    const getTime = async() => {
-        fetch(props.API_URL+TIME_ENDPOINT)
-            .then((response) => response.json())
-            .then((data) => {
-                // console.log(data);
-                setSeconds(secondsToStr(data));
-            }); 
-    }
-
+    
     useEffect(() => {
+        const getTime = async() => {
+            fetch(props.API_URL+TIME_ENDPOINT)
+                .then((response) => response.json())
+                .then((data) => {
+                    // console.log(data);
+                    setSeconds(secondsToStr(data));
+                }); 
+        }
+        
         fetch(props.API_URL+AVG_ENDPOINT)
             .then((response) => response.json())
             .then((data) => {
@@ -67,7 +68,7 @@ function StatHolder(props) {
             const timer = setInterval(getTime, 2000);
 
             return () => clearInterval(timer);
-    }, [props.API_URL, getTime]);
+    }, [props.API_URL]);
 
     let boxSX = {
         color: 'black',
