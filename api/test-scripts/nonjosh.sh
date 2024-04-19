@@ -1,1 +1,1 @@
-curl http://localhost:5000/api/v1/newjosh --data '{"userID":"1", "unixTimestamp": '"$(date +%s)"', "joshInt":0}' -H "Content-Type: application/json"
+curl http://localhost:6969/api/v1/newjosh --data '{"userID":"1", "unixTimestamp": '"$(date +%s)"', "joshInt":0}' -H "Content-Type: application/json"

@@ -1,1 +1,1 @@
-curl http://localhost:5000/api/v1/joshavg
+curl http://localhost:6969/api/v1/joshavg

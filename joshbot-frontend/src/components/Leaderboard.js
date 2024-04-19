@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box'; 
 
-const API_URL = "http://localhost:5000";
-
 function Leaderboard(props) {
     const [users, setUsers] = useState([]); 
 
@@ -21,13 +19,13 @@ function Leaderboard(props) {
     };
 
     useEffect(() => {
-        fetch(API_URL+props.endpoint)
+        fetch(props.API_URL+props.endpoint)
             .then((response) => response.json())
             .then((data) => {
                 console.log(data)
                 setUsers(data);
             });
-    }, [props.endpoint]);
+    }, [props.API_URL, props.endpoint]);
 
     return (
         <Box 

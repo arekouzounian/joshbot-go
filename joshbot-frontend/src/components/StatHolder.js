@@ -4,7 +4,6 @@ import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import Divider from '@mui/material/Divider';
 
-const API_URL = "http://localhost:5000";
 const AVG_ENDPOINT = "/api/v1/joshavg";
 const TIME_ENDPOINT = "/api/v1/lastjosh";
 
@@ -50,7 +49,7 @@ function StatHolder(props) {
     const [seconds, setSeconds] = useState("Loading...");
 
     const getTime = async() => {
-        fetch(API_URL+TIME_ENDPOINT)
+        fetch(props.API_URL+TIME_ENDPOINT)
             .then((response) => response.json())
             .then((data) => {
                 // console.log(data);
@@ -59,7 +58,7 @@ function StatHolder(props) {
     }
 
     useEffect(() => {
-        fetch(API_URL+AVG_ENDPOINT)
+        fetch(props.API_URL+AVG_ENDPOINT)
             .then((response) => response.json())
             .then((data) => {
                 // console.log(data);
@@ -69,7 +68,7 @@ function StatHolder(props) {
             const timer = setInterval(getTime, 2000);
 
             return () => clearInterval(timer);
-    }, []);
+    }, [props.API_URL]);
 
     let boxSX = {
         // border: '1px solid white',
@@ -104,7 +103,7 @@ function StatHolder(props) {
 
             <List className='statWrapper' sx={boxSX}>
                 <ListItem sx={listSX}>
-                    <ListItemText primary='Last Josh'/>
+                    <ListItemText primary='Last Josh (🔄 2s)'/>
                 </ListItem>
                 <Divider></Divider>
                 <ListItem sx={listSX}>

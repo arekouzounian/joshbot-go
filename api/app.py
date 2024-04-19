@@ -13,6 +13,7 @@ app = Flask(__name__)
 CORS(app)
 
 
+
 '''
 userID,ikigag,http://mypfp.url,12,0 // userID, username, avatar url, total joshes, total non-joshes
 userID,ikigag2,http://otherpfp.url,1,1
