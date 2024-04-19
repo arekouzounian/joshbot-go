@@ -61,19 +61,15 @@ function StatHolder(props) {
         fetch(props.API_URL+AVG_ENDPOINT)
             .then((response) => response.json())
             .then((data) => {
-                // console.log(data);
                 setAvg(parseFloat(data).toFixed(3));
             });
 
             const timer = setInterval(getTime, 2000);
 
             return () => clearInterval(timer);
-    }, [props.API_URL]);
+    }, [props.API_URL, getTime]);
 
     let boxSX = {
-        // border: '1px solid white',
-        // borderRadius: 1, 
-        // margin: '1%',
         color: 'black',
         py: 0,
         borderRadius: 2,
