@@ -1,12 +1,15 @@
 from flask import Flask, request, jsonify 
 from flask_cors import CORS
-import schedule 
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 import csv 
 import os 
 import time
 import random
+import atexit 
 
-app = Flask(__name__)
+
+app = Flask(__name__)   
 CORS(app)
 
 
@@ -253,8 +256,16 @@ def getWallOfShame():
     return getBoard(5, lambda x: int(x[USER_TABLE_NONJOSH_OFFSET]))
 
 
-# picks a new josh of the week 
-@app.route('/api/v1/test')
+@app.route("/api/v1/joshotw")
+def getJoshOTW():
+    if not os.path.exists(joshOfTheWeekTable): 
+        return 'Josh OTW table doesn\'t exist!', 500
+
+    with open(joshOfTheWeekTable, 'r') as c:
+        reader = csv.reader(c)
+        return jsonify(list(reader)), 200
+
+
 def joshOfTheWeek(): 
     # pick a new josh 
     if not os.path.exists(userTable): 
@@ -290,7 +301,8 @@ def joshOfTheWeek():
     return line, 200
 
 
+scheduler = BackgroundScheduler()
+scheduler.add_job(joshOfTheWeek, IntervalTrigger(weeks=1))
+scheduler.start()
 
-
-
-schedule.every().week.do(joshOfTheWeek)
+atexit.register(scheduler.shutdown)
