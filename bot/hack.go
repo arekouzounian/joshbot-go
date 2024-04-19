@@ -9,6 +9,7 @@ import (
 
 // generates josh log and user table
 // BUG: joshlog stored in reverse chronological order
+// UPDATE: this is in fact not a bug and will improve performance
 func genTables(session *discordgo.Session, joshlog_output_file string, usertable_output_file string) {
 	// first generate josh log
 	var userJoshCount map[string]uint = make(map[string]uint)

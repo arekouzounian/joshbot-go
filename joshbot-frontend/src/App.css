@@ -1,10 +1,21 @@
 body {
   text-align: center;
   background-color: #31304c; 
+  color: white; 
 }
 
 .leaderboardsWrapper {
   display:inline;
+}
+
+.statWrapper {
+  display:inline-block; 
+  margin:5%;
+}
+
+.centerColumn {
+  display: inline-block; 
+  margin: 5%;
 }
 
 /* .App-logo {

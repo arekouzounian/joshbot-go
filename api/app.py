@@ -66,6 +66,8 @@ def test():
     return '<h1>josh</h1>'
 
 
+#TODO: update joshlog to be in reverse chronological order 
+
 # new josh message 
 @app.route("/api/v1/newjosh", methods=['POST'])
 def newJosh():     
@@ -161,6 +163,8 @@ def memberUpdate():
     return 'User successfully joined.'
                 
 
+
+#TODO: update this to only grab first line (given that it's stored in reverse chrono order)
 
 # number of seconds since last josh 
 @app.route("/api/v1/lastjosh", methods=['GET'])

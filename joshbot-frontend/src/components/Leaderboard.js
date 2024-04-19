@@ -32,11 +32,11 @@ function Leaderboard(props) {
     return (
         <Box 
         sx={boxStyle}>
-            <h1>Leaderboard</h1>
+            <h1>{props.title}</h1>
             {users.length > 0 && 
                 users.map((user, index) => (
                     <Box sx ={{ borderRadius: 1, border: '1px solid gray', width: 'auto', height: '20%', margin: '5%', padding: '5%'}}>
-                        {user[props.keyIdx]}:{user[props.valueIdx]}
+                    {index+1}. {user[props.keyIdx]}:{user[props.valueIdx]}
                     </Box>
                 ))
             }
@@ -44,4 +44,4 @@ function Leaderboard(props) {
     )
 }
 
-export {Leaderboard }
+export { Leaderboard }
