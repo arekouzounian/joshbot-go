@@ -11,12 +11,22 @@ body {
 .statWrapper {
   display:inline-block; 
   margin:5%;
+  font-weight: bold; 
+  font-size: 30px; 
+
+
+  /* for later fuckery */ 
+  /* background-image: url('./josh.png'); 
+  background-size: 10px;
+  background-repeat: repeat;  */
 }
 
 .centerColumn {
   display: inline-block; 
   margin: 5%;
 }
+
+
 
 /* .App-logo {
   height: 40vmin;
