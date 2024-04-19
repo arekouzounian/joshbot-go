@@ -3,7 +3,7 @@ import { JoshOTW } from './components/JoshOTW';
 import { Leaderboard } from './components/Leaderboard';
 import { StatHolder } from './components/StatHolder';
 
-const API_URL = "http://localhost:6969";
+const API_URL = "http://joshbot.xyz:6969";
 
 function App() {
   return (

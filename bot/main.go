@@ -28,7 +28,7 @@ const (
 	GUILD_ID          = "715798257661509743"
 	JOSH_ROLE_ID      = "716065561385238589"
 	JOSH_CHANNEL_ID   = "715798258190123031"
-	API_URL           = "http://localhost:6969"
+	API_URL           = "http://joshbot.xyz:6969"
 	ADD_USER_ENDPOINT = "/api/v1/joshupdate"
 	NEW_MSG_ENDPOINT  = "/api/v1/newjosh"
 )
