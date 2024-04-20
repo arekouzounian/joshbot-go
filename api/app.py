@@ -15,7 +15,7 @@ import atexit
 app = Flask(__name__)   
 CORS(app)
 
-FOLDER_PATH= os.path.dirname(__file__)
+FOLDER_PATH= os.path.dirname(__file__) + '/'
 
 '''
 userID,ikigag,http://mypfp.url,12,0 // userID, username, avatar url, total joshes, total non-joshes
