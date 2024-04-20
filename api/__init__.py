@@ -102,7 +102,7 @@ def newJosh():
 
 
     
-    csv_line = f'{json['unixTimestamp']},{json['userID']},{json['joshInt']}'
+    csv_line = f"{json['unixTimestamp']},{json['userID']},{json['joshInt']}"
     prepend_line(joshTable, csv_line)
 
     userRow = -1
