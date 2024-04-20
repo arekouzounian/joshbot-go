@@ -13,6 +13,8 @@ def create_app():
     app = Flask(__name__)   
     CORS(app)
 
+    FOLDER_PATH="/var/www/joshapi/api/"
+
     '''
     userID,ikigag,http://mypfp.url,12,0 // userID, username, avatar url, total joshes, total non-joshes
     userID,ikigag2,http://otherpfp.url,1,1
@@ -23,7 +25,7 @@ def create_app():
     USER_TABLE_AVATAR_OFFSET = 2
     USER_TABLE_JOSH_OFFSET = 3
     USER_TABLE_NONJOSH_OFFSET = 4
-    userTable = './users.csv' # stores user info: userID, number of joshes sent
+    userTable = FOLDER_PATH+'users.csv' # stores user info: userID, number of joshes sent
     USER_TABLE_NUM_FIELDS = 5 # number of fields (columns) in the table 
 
 
@@ -35,7 +37,7 @@ def create_app():
     JOSH_TABLE_TIMESTAMP_OFFSET = 0
     JOSH_TABLE_ID_OFFSET = 1
     JOSH_TABLE_JOSHINT_OFFSET = 2
-    joshTable = './joshlog.csv' # basically a log of every josh sent 
+    joshTable = FOLDER_PATH+'joshlog.csv' # basically a log of every josh sent 
     JOSH_TABLE_NUM_FIELDS = 3 # number of fields (columns) in the table 
 
     JOSH_OTW_TABLE_ID_OFFSET = 0 
@@ -43,7 +45,7 @@ def create_app():
     JOSH_OTW_TABLE_AVATAR_OFFSET = 2 
     JOSH_OTW_TABLE_JOSH_OFFSET = 3 
     JOSH_OTW_TABLE_NONJOSH_OFFSET = 4
-    joshOfTheWeekTable = './joshOTW.csv'
+    joshOfTheWeekTable = FOLDER_PATH}'joshOTW.csv'
     JOSH_OTW_TABLE_NUM_FIELDS = 5
 
 
