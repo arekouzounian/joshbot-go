@@ -90,9 +90,20 @@ def newJosh():
     if len(missingFields) > 0:
         return missingFieldsErr(missingFields)
     
-    with open(joshTable, mode='a') as joshlog: 
-        writer = csv.writer(joshlog)
-        writer.writerow([json['unixTimestamp'], json['userID'], json['joshInt']])
+
+    def prepend_line(file_name, line):
+        dummy_file = file_name + '.bak'
+        with open(file_name, 'r') as read_obj, open(dummy_file, 'w') as write_obj:
+            write_obj.write(line + '\n')
+            for line in read_obj:
+                write_obj.write(line)
+        os.remove(file_name)
+        os.rename(dummy_file, file_name)
+
+
+    
+    csv_line = f'{json['unixTimestamp']},{json['userID']},{json['joshInt']}'
+    prepend_line(joshTable, csv_line)
 
     userRow = -1
     table = []
@@ -181,8 +192,7 @@ def timeSinceLastJosh():
         timestamp = 0
         with open(joshTable, mode='r') as csv_file: 
             reader = csv.reader(csv_file)
-            for line in reader: 
-                pass
+            line = next(reader)
             timestamp = line[JOSH_TABLE_TIMESTAMP_OFFSET]
 
         if timestamp == 0: 

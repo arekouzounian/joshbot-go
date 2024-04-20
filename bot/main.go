@@ -85,9 +85,9 @@ func main() {
 }
 
 func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate) {
-	// if message.GuildID != GUILD_ID {
-	// 	return
-	// }
+	if message.GuildID != GUILD_ID {
+		return
+	}
 
 	reqData := NewUserMessage{
 		UserID:        message.Author.ID,
@@ -159,9 +159,9 @@ func userUpdate(session *discordgo.Session, update *discordgo.GuildMemberUpdate)
 	// change their name to josh
 	// give them the josh role
 
-	// if update.GuildID != GUILD_ID {
-	// 	return
-	// }
+	if update.GuildID != GUILD_ID {
+		return
+	}
 
 	if update.Nick != "josh" {
 		log.Printf("Non-josh nickname detected on user %s", update.User.Username)
