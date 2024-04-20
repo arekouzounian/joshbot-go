@@ -17,6 +17,15 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+/*
+
+	TODO:
+	- strip perms
+	- check for thread creation (?)
+	- delete edited messages
+
+*/
+
 var (
 	Token   string
 	LogFile string
@@ -67,6 +76,7 @@ func main() {
 	dg.AddHandler(messageCreate)
 	dg.AddHandler(userJoin)
 	dg.AddHandler(userUpdate)
+	dg.AddHandler(threadCreate)
 
 	err = dg.Open()
 	if err != nil {
@@ -74,7 +84,7 @@ func main() {
 	}
 
 	fmt.Println("Bot running! Use Ctrl-C to exit.")
-	// genTables(dg, "../api/joshlog.csv", "../api/users.csv")
+	// GenTables(dg, "../api/joshlog.csv", "../api/users.csv")
 	sigchannel := make(chan os.Signal, 1)
 	signal.Notify(sigchannel, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sigchannel
@@ -84,8 +94,34 @@ func main() {
 	log.Printf("Received interrupt, shutting down\n\n")
 }
 
+// for you bailey
+func threadCreate(session *discordgo.Session, thread *discordgo.ThreadCreate) {
+	if thread.GuildID != GUILD_ID {
+		return
+	}
+
+	_, err := session.ChannelDelete(thread.ID)
+	if err != nil {
+		log.Printf("error deleting thread: %s", err.Error())
+	}
+
+	log.Printf("Deleted thread successfully")
+}
+
 func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate) {
 	if message.GuildID != GUILD_ID {
+		return
+	}
+
+	if message.Thread != nil {
+		_, err := session.ChannelDelete(message.Thread.ID)
+		if err != nil {
+			log.Printf("error with deleting thread: %s", err.Error())
+		}
+		log.Printf("deleted thread %s", message.Thread.Name)
+	}
+
+	if message.Author.System {
 		return
 	}
 
