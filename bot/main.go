@@ -95,7 +95,7 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 		JoshInt:       0,
 	}
 
-	if strings.ToLower(message.Content) != "josh" {
+	if message.Content != "josh" {
 		log.Printf("Non-josh message detected: %s: %s\n", message.Author.Username, message.Content)
 		err := session.ChannelMessageDelete(message.ChannelID, message.ID)
 		if err != nil {
