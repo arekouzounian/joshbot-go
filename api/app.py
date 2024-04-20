@@ -45,7 +45,7 @@ def create_app():
     JOSH_OTW_TABLE_AVATAR_OFFSET = 2 
     JOSH_OTW_TABLE_JOSH_OFFSET = 3 
     JOSH_OTW_TABLE_NONJOSH_OFFSET = 4
-    joshOfTheWeekTable = FOLDER_PATH}'joshOTW.csv'
+    joshOfTheWeekTable = FOLDER_PATH+'joshOTW.csv'
     JOSH_OTW_TABLE_NUM_FIELDS = 5
 
 
