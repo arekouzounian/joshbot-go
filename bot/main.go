@@ -27,8 +27,9 @@ import (
 */
 
 var (
-	Token   string
-	LogFile string
+	Token     string
+	DebugMode bool
+	LogFile   string
 )
 
 // hardcoded server ID; allows testing on other server
@@ -44,6 +45,7 @@ const (
 
 func init() {
 	flag.StringVar(&Token, "t", "", "Bot Token")
+	flag.BoolVar(&DebugMode, "d", false, "sets the bot to debug mode")
 	flag.StringVar(&LogFile, "o", "./joshbot.log", "The file to output logs to. By default, creates a file in the current directory named 'joshbot.log'")
 	flag.Parse()
 }
@@ -76,14 +78,24 @@ func main() {
 	dg.AddHandler(messageCreate)
 	dg.AddHandler(userJoin)
 	dg.AddHandler(userUpdate)
-	dg.AddHandler(threadCreate)
+	dg.AddHandler(messageUpdate)
 
 	err = dg.Open()
 	if err != nil {
 		log.Fatalf("Error opening discord connection: %s", err.Error())
 	}
 
+	if DebugMode {
+		fmt.Println("WARNING: Debug mode activated. Server access not restricted, API requests not being made.")
+
+		// trickery
+		// err := dg.GuildMemberRoleRemove(GUILD_ID, "392796102132367364", "715798870256386131")
+		// if err != nil {
+		// 	fmt.Println(err.Error())
+		// }
+	}
 	fmt.Println("Bot running! Use Ctrl-C to exit.")
+	checkUsernames(dg)
 	// GenTables(dg, "../api/joshlog.csv", "../api/users.csv")
 	sigchannel := make(chan os.Signal, 1)
 	signal.Notify(sigchannel, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
@@ -94,31 +106,59 @@ func main() {
 	log.Printf("Received interrupt, shutting down\n\n")
 }
 
-// for you bailey
-func threadCreate(session *discordgo.Session, thread *discordgo.ThreadCreate) {
-	if thread.GuildID != GUILD_ID {
+func checkUsernames(session *discordgo.Session) {
+	users, err := session.GuildMembers(GUILD_ID, "", 1000)
+	if err != nil {
+		log.Printf("Error retrieving user list during name check: %s", err.Error())
 		return
 	}
 
-	_, err := session.ChannelDelete(thread.ID)
-	if err != nil {
-		log.Printf("error deleting thread: %s", err.Error())
+	for _, user := range users {
+		if user.Nick != "josh" {
+			err := session.GuildMemberNickname(GUILD_ID, user.User.ID, "josh")
+			if err != nil {
+				log.Printf("Error changing nickname of user %s to josh: %s", user.User.Username, err.Error())
+			}
+		}
+	}
+}
+
+func messageUpdate(session *discordgo.Session, message *discordgo.MessageUpdate) {
+	if !DebugMode && message.GuildID != GUILD_ID {
+		return
 	}
 
-	log.Printf("Deleted thread successfully")
+	if message.Author.System {
+		return
+	}
+
+	if message.Content != "josh" {
+		err := session.ChannelMessageDelete(message.ChannelID, message.ID)
+		if err != nil {
+			fmt.Printf("Error deleting edited message: %s", err.Error())
+		}
+	}
+
 }
 
 func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate) {
-	if message.GuildID != GUILD_ID {
+	if !DebugMode && message.GuildID != GUILD_ID {
 		return
 	}
 
-	if message.Thread != nil {
-		_, err := session.ChannelDelete(message.Thread.ID)
+	channel, err := session.Channel(message.ChannelID)
+	if err != nil {
+		log.Printf("Error getting channel: %s", err.Error())
+		log.Printf("The error might be related to a thread deletion event")
+		return
+	}
+
+	if channel.IsThread() {
+		_, err := session.ChannelDelete(channel.ID)
 		if err != nil {
-			log.Printf("error with deleting thread: %s", err.Error())
+			log.Fatalf("Error deleting thread channel: %s", err.Error())
 		}
-		log.Printf("deleted thread %s", message.Thread.Name)
+		return
 	}
 
 	if message.Author.System {
@@ -160,23 +200,25 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 		return
 	}
 
-	resp, err := http.Post(API_URL+NEW_MSG_ENDPOINT, "application/json", bytes.NewBuffer(json))
-	if err != nil {
-		log.Printf("Error creating api request: %s", err.Error())
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		buf := new(strings.Builder)
-		_, err := io.Copy(buf, resp.Body)
+	if !DebugMode {
+		resp, err := http.Post(API_URL+NEW_MSG_ENDPOINT, "application/json", bytes.NewBuffer(json))
 		if err != nil {
-			log.Printf("Couldn't read request response: %s", err.Error())
+			log.Printf("Error creating api request: %s", err.Error())
+			return
 		}
+		defer resp.Body.Close()
 
-		log.Printf("Status code %d, server responded with: %s", resp.StatusCode, buf.String())
-	} else {
-		log.Printf("Success: %s's josh event sent to API", message.Author.Username)
+		if resp.StatusCode != 200 {
+			buf := new(strings.Builder)
+			_, err := io.Copy(buf, resp.Body)
+			if err != nil {
+				log.Printf("Couldn't read request response: %s", err.Error())
+			}
+
+			log.Printf("Status code %d, server responded with: %s", resp.StatusCode, buf.String())
+		} else {
+			log.Printf("Success: %s's josh event sent to API", message.Author.Username)
+		}
 	}
 }
 
@@ -195,7 +237,7 @@ func userUpdate(session *discordgo.Session, update *discordgo.GuildMemberUpdate)
 	// change their name to josh
 	// give them the josh role
 
-	if update.GuildID != GUILD_ID {
+	if !DebugMode && update.GuildID != GUILD_ID {
 		return
 	}
 
@@ -225,33 +267,36 @@ func userUpdate(session *discordgo.Session, update *discordgo.GuildMemberUpdate)
 	}
 
 	// send api request
-	reqData := JoshUpdateEvent{
-		UserID:   update.User.ID,
-		Username: update.User.Username,
-		Avatar:   update.AvatarURL(""),
-	}
-	json, err := json.Marshal(reqData)
-	if err != nil {
-		log.Printf("Error marshalling json: %s", err.Error())
-		return
-	}
+	if !DebugMode {
 
-	resp, err := http.Post(API_URL+ADD_USER_ENDPOINT, "application/json", bytes.NewBuffer(json))
-	if err != nil {
-		log.Printf("Error creating API request: %s", err.Error())
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		buf := new(strings.Builder)
-		_, err := io.Copy(buf, resp.Body)
+		reqData := JoshUpdateEvent{
+			UserID:   update.User.ID,
+			Username: update.User.Username,
+			Avatar:   update.AvatarURL(""),
+		}
+		json, err := json.Marshal(reqData)
 		if err != nil {
-			log.Printf("Couldn't read request response: %s", err.Error())
+			log.Printf("Error marshalling json: %s", err.Error())
+			return
 		}
 
-		log.Printf("Status code %d, server responded with: %s", resp.StatusCode, buf.String())
-	} else {
-		log.Printf("Success: %s's guild update registered with API", update.User.Username)
+		resp, err := http.Post(API_URL+ADD_USER_ENDPOINT, "application/json", bytes.NewBuffer(json))
+		if err != nil {
+			log.Printf("Error creating API request: %s", err.Error())
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != 200 {
+			buf := new(strings.Builder)
+			_, err := io.Copy(buf, resp.Body)
+			if err != nil {
+				log.Printf("Couldn't read request response: %s", err.Error())
+			}
+
+			log.Printf("Status code %d, server responded with: %s", resp.StatusCode, buf.String())
+		} else {
+			log.Printf("Success: %s's guild update registered with API", update.User.Username)
+		}
 	}
 }
