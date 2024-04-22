@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/go-co-op/gocron/v2"
 )
 
 /*
@@ -41,6 +42,7 @@ const (
 	API_URL           = "http://joshbot.xyz:6969"
 	ADD_USER_ENDPOINT = "/api/v1/joshupdate"
 	NEW_MSG_ENDPOINT  = "/api/v1/newjosh"
+	JOSH_OTW_ENDPOINT = "/api/v1/joshotw"
 )
 
 func init() {
@@ -73,7 +75,7 @@ func main() {
 	log.Println("Discord session started")
 
 	// https://discord.com/developers/docs/topics/gateway#gateway-intents
-	dg.Identify.Intents = discordgo.IntentGuildMessages | discordgo.IntentGuildMembers
+	dg.Identify.Intents = discordgo.IntentGuildMessages | discordgo.IntentGuildMembers | discordgo.IntentsDirectMessages
 
 	dg.AddHandler(messageCreate)
 	dg.AddHandler(userJoin)
@@ -83,6 +85,39 @@ func main() {
 	err = dg.Open()
 	if err != nil {
 		log.Fatalf("Error opening discord connection: %s", err.Error())
+	}
+	defer dg.Close()
+
+	scheduler, err := gocron.NewScheduler()
+	if err != nil {
+		log.Fatalf("Error creating scheduler: %s", err.Error())
+	}
+	j, err := scheduler.NewJob(
+		gocron.WeeklyJob(
+			0,
+			gocron.NewWeekdays(
+				time.Monday,
+			),
+			gocron.NewAtTimes(
+				gocron.NewAtTime(1, 0, 0),
+			),
+		),
+		gocron.NewTask(
+			dmJoshOtw,
+			dg,
+		),
+		gocron.WithStartAt(
+			gocron.WithStartDateTime(time.Now()),
+		),
+	)
+	fmt.Println("Created josh of the week scheduler successfully.")
+
+	if err != nil {
+		log.Fatalf("Error scheduling job: %s", err.Error())
+	}
+	err = j.RunNow()
+	if err != nil {
+		log.Fatalf("Error running job: %s", err.Error())
 	}
 
 	if DebugMode {
@@ -101,9 +136,43 @@ func main() {
 	signal.Notify(sigchannel, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sigchannel
 
-	dg.Close()
-
 	log.Printf("Received interrupt, shutting down\n\n")
+}
+
+func dmJoshOtw(session *discordgo.Session) {
+	resp, err := http.Get(API_URL + JOSH_OTW_ENDPOINT)
+	if err != nil {
+		log.Printf("Error getting josh of the week: %s", err.Error())
+		return
+	}
+	defer resp.Body.Close()
+
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Error parsing response body: %s", err.Error())
+		return
+	}
+
+	var fields []string
+	err = json.Unmarshal(b, &fields)
+	if err != nil {
+		log.Printf("Error unmarshalling json: %s", err.Error())
+		return
+	}
+
+	channel, err := session.UserChannelCreate(fields[0])
+	if err != nil {
+		log.Printf("Error creating DM channel with user %s: %s", fields[1], err.Error())
+		return
+	}
+
+	_, err = session.ChannelMessageSend(channel.ID, "congratulations josh, you are now this week's josh of the week. https://joshbot.xyz")
+	if err != nil {
+		log.Printf("Error DM'ing user: %s", err.Error())
+		return
+	}
+
+	log.Printf("Sent congratulatory message to user %s", fields[1])
 }
 
 func checkUsernames(session *discordgo.Session) {
