@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify 
 from flask_cors import CORS
 from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.cron import CronTrigger
 import csv 
 import os 
 import time
@@ -315,7 +315,8 @@ def joshOfTheWeek():
 
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(joshOfTheWeek, IntervalTrigger(weeks=1))
+everyWeekTrigger = CronTrigger(year='*',month='*',week='*',day_of_week='0',hour='0',minute='0',second='0')
+scheduler.add_job(joshOfTheWeek, trigger=everyWeekTrigger)
 scheduler.start()
 
 atexit.register(scheduler.shutdown)
