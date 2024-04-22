@@ -152,7 +152,7 @@ func dmJoshOtw(session *discordgo.Session) {
 		return
 	}
 
-	_, err = session.ChannelMessageSend(channel.ID, "congratulations josh, you are now this week's josh of the week. https://joshbot.xyz")
+	_, err = session.ChannelMessageSend(channel.ID, "congratulations josh, you are now this week's josh of the week. http://joshbot.xyz")
 	if err != nil {
 		log.Printf("Error DM'ing user: %s", err.Error())
 		return
