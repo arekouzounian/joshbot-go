@@ -92,33 +92,24 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error creating scheduler: %s", err.Error())
 	}
-	j, err := scheduler.NewJob(
-		gocron.WeeklyJob(
-			0,
-			gocron.NewWeekdays(
-				time.Monday,
-			),
-			gocron.NewAtTimes(
-				gocron.NewAtTime(1, 0, 0),
-			),
+	scheduler.Start()
+	defer scheduler.Shutdown()
+
+	_, err = scheduler.NewJob(
+		gocron.CronJob(
+			"0 2 * * 0",
+			false,
 		),
 		gocron.NewTask(
 			dmJoshOtw,
 			dg,
 		),
-		gocron.WithStartAt(
-			gocron.WithStartDateTime(time.Now()),
-		),
 	)
-	fmt.Println("Created josh of the week scheduler successfully.")
-
 	if err != nil {
 		log.Fatalf("Error scheduling job: %s", err.Error())
 	}
-	err = j.RunNow()
-	if err != nil {
-		log.Fatalf("Error running job: %s", err.Error())
-	}
+
+	fmt.Println("Created josh of the week scheduler successfully.")
 
 	if DebugMode {
 		fmt.Println("WARNING: Debug mode activated. Server access not restricted, API requests not being made.")
@@ -147,18 +138,13 @@ func dmJoshOtw(session *discordgo.Session) {
 	}
 	defer resp.Body.Close()
 
-	b, err := io.ReadAll(resp.Body)
+	buf := new(strings.Builder)
+	_, err = io.Copy(buf, resp.Body)
 	if err != nil {
-		log.Printf("Error parsing response body: %s", err.Error())
-		return
+		log.Printf("Couldn't read request response: %s", err.Error())
 	}
 
-	var fields []string
-	err = json.Unmarshal(b, &fields)
-	if err != nil {
-		log.Printf("Error unmarshalling json: %s", err.Error())
-		return
-	}
+	fields := strings.Split(buf.String(), ",")
 
 	channel, err := session.UserChannelCreate(fields[0])
 	if err != nil {
@@ -219,6 +205,10 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 	if err != nil {
 		log.Printf("Error getting channel: %s", err.Error())
 		log.Printf("The error might be related to a thread deletion event")
+		return
+	}
+
+	if channel.Type == discordgo.ChannelTypeDM {
 		return
 	}
 
