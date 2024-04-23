@@ -10,7 +10,7 @@ import (
 // generates josh log and user table
 // BUG: joshlog stored in reverse chronological order
 // UPDATE: this is in fact not a bug and will improve performance
-func GenTables(session *discordgo.Session, joshlog_output_file string, usertable_output_file string) {
+func GenTables(session *discordgo.Session, joshlog_output_file string, usertable_output_file string) error {
 	// first generate josh log
 	var userJoshCount map[string]uint = make(map[string]uint)
 	var userNonJoshCount map[string]uint = make(map[string]uint)
@@ -18,13 +18,13 @@ func GenTables(session *discordgo.Session, joshlog_output_file string, usertable
 	messages, err := session.ChannelMessages(JOSH_CHANNEL_ID, 100, "", "", "")
 	if err != nil {
 		fmt.Printf("Error grabbing messages: %s\n", err.Error())
-		return
+		return err
 	}
 
 	file, err := os.OpenFile(joshlog_output_file, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		fmt.Printf("Error opening file %s: %s\n", joshlog_output_file, err.Error())
-		return
+		return err
 	}
 	defer file.Close()
 
@@ -60,14 +60,14 @@ func GenTables(session *discordgo.Session, joshlog_output_file string, usertable
 	userfile, err := os.OpenFile(usertable_output_file, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		fmt.Printf("Error opening file %s: %s\n", usertable_output_file, err.Error())
-		return
+		return err
 	}
 	defer userfile.Close()
 
 	users, err := session.GuildMembers(GUILD_ID, "", 1000)
 	if err != nil {
 		fmt.Printf("Error getting users: %s\n", err.Error())
-		return
+		return err
 	}
 
 	// schema is id,name,avatar,josh,nonjosh
@@ -83,4 +83,5 @@ func GenTables(session *discordgo.Session, joshlog_output_file string, usertable
 	}
 
 	fmt.Println("Successful Scrape.")
+	return nil
 }

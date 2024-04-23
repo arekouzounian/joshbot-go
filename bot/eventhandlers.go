@@ -41,8 +41,7 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 
 	channel, err := session.Channel(message.ChannelID)
 	if err != nil {
-		log.Printf("Error getting channel: %s", err.Error())
-		log.Printf("The error might be related to a thread deletion event")
+		log.Printf("Error getting channel: %s. The error might be related to a thread deletion event.", err.Error())
 		return
 	}
 

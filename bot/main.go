@@ -13,9 +13,10 @@ import (
 )
 
 var (
-	Token     string
-	DebugMode bool
-	LogFile   string
+	Token        string
+	DebugMode    bool
+	GenTableMode bool
+	LogFile      string
 )
 
 // hardcoded server ID; allows testing on other server
@@ -35,6 +36,7 @@ const (
 func init() {
 	flag.StringVar(&Token, "t", "", "Bot Token")
 	flag.BoolVar(&DebugMode, "d", false, "sets the bot to debug mode")
+	flag.BoolVar(&GenTableMode, "g", false, "will use the bot to generate user table and josh log table, then exits.")
 	flag.StringVar(&LogFile, "o", "./joshbot.log", "The file to output logs to. By default, creates a file in the current directory named 'joshbot.log'")
 	flag.Parse()
 }
@@ -75,6 +77,15 @@ func main() {
 	}
 	defer dg.Close()
 
+	if GenTableMode {
+		fmt.Printf("Entering table generator mode...")
+		err = GenTables(dg, "./joshlog.csv", "./users.csv")
+		if err == nil {
+			fmt.Println("Tables generated successfully at './joshlog.csv', './users.csv'")
+		}
+		return
+	}
+
 	scheduler, err := gocron.NewScheduler()
 	if err != nil {
 		log.Fatalf("Error creating scheduler: %s", err.Error())
@@ -100,16 +111,10 @@ func main() {
 
 	if DebugMode {
 		fmt.Println("WARNING: Debug mode activated. Server access not restricted, API requests not being made.")
-
-		// trickery
-		// err := dg.GuildMemberRoleRemove(GUILD_ID, "392796102132367364", "715798870256386131")
-		// if err != nil {
-		// 	fmt.Println(err.Error())
-		// }
 	}
 	fmt.Println("Bot running! Use Ctrl-C to exit.")
 	checkUsernames(dg)
-	// GenTables(dg, "../api/joshlog.csv", "../api/users.csv")
+
 	sigchannel := make(chan os.Signal, 1)
 	signal.Notify(sigchannel, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sigchannel
