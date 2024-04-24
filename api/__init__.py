@@ -189,16 +189,17 @@ def timeSinceLastJosh():
     # check log for last josh 
 
     if os.path.exists(joshTable):
-        timestamp = 0
-        with open(joshTable, mode='r') as csv_file: 
-            reader = csv.reader(csv_file)
-            line = next(reader)
-            timestamp = line[JOSH_TABLE_TIMESTAMP_OFFSET]
+        # with open(joshTable, mode='r') as csv_file: 
+        #     reader = csv.reader(csv_file)
+        #     line = next(reader)
+        #     timestamp = line[JOSH_TABLE_TIMESTAMP_OFFSET]
+
+        timestamp = int(os.path.getmtime(joshTable))
 
         if timestamp == 0: 
             return 'Error reading table',500
         
-        return str(int(time.time()) - int(timestamp)), 200
+        return str(int(time.time()) - timestamp), 200
     else:
         return 'Josh Table doesn\'t exist', 500
 
