@@ -22,3 +22,15 @@ This folder contains all the code for the discord bot this project is built on.
 - example reward: josh percent. Increases the chance that your josh message will give you two josh points. (medium cost)
 - example rewards: hsoj. Reduces another user's josh score by hsoj power, min. 1. (low cost)
 - example rewards: hsoj power. Increases the amount of josh's removed from a user when using hsoj. (high cost)
+
+#### Table schema & ideas
+- bot caches the joshOTW by checking how long it's been since the joshOTW table was modified
+- whenever a user claims their josh coins, joshOTW cache is checked (and updated, if joshOTW table has been modified)
+  - If joshOTW has been modified and new joshOTW != old joshOTW, give the joshOTW user their bonus 
+  - then update the internal cache to reflect joshOTW has been given their bonus 
+- coins earned per day per user is also stored in memory rather than the table, because it will clear periodically and it's expensive to check often 
+
+`joshcoin.csv`:
+```csv
+userID,josh_coin_count,joshPercent,joshPower,hsojPower
+```

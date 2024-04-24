@@ -68,28 +68,23 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 		JoshInt:       0,
 	}
 
-	if message.Content != "josh" {
+	if message.Content != "josh" { // non-josh message
+
 		log.Printf("Non-josh message detected: %s: %s\n", message.Author.Username, message.Content)
-		err := session.ChannelMessageDelete(message.ChannelID, message.ID)
-		if err != nil {
-			log.Printf("Error deleting message: %s", err.Error())
+		DeleteMsg(session, message.ChannelID, message.ID)
 
-			perms, err := session.State.UserChannelPermissions(session.State.User.ID, message.ChannelID)
-			if err != nil {
-				log.Fatalf("Unable to retreive user channel permissions: %s", err.Error())
-			}
-
-			if perms&discordgo.PermissionAdministrator == 0 {
-				log.Printf("Not running as administrator on this channel! Won't be able to remove messages.")
-				session.ChannelMessageSend(message.ChannelID, "I need to be admin to work effectively.")
-			}
-
+	} else { // josh message
+		time_gap := time.Since(LastMsg.Timestamp)
+		if LastMsg.Author.ID == message.Author.ID && time_gap < (time.Hour*DOUBLE_JOSH_SPAN) {
+			log.Printf("User %s sent a double-josh", message.Author.Username)
+			DeleteMsg(session, message.ChannelID, message.ID)
+			DMUser(session, message.Author.ID, fmt.Sprintf("Double-josh detected: do not double josh within the span of %d hours", DOUBLE_JOSH_SPAN))
 		} else {
-			log.Printf("Message deleted successfully.")
+			// non-double josh
+			reqData.JoshInt = 1
 		}
-	} else {
-		reqData.JoshInt = 1
 	}
+	LastMsg = message.Message
 
 	// Marshal data for request body
 	json, err := json.Marshal(reqData)

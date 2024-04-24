@@ -9,7 +9,6 @@ import (
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/go-co-op/gocron/v2"
 )
 
 var (
@@ -17,6 +16,7 @@ var (
 	DebugMode    bool
 	GenTableMode bool
 	LogFile      string
+	LastMsg      *discordgo.Message
 )
 
 // hardcoded server ID; allows testing on other server
@@ -24,6 +24,7 @@ var (
 // if the bot is always going to be on the same server as api,
 // can change API_URL -> http://localhost:6969
 const (
+	DOUBLE_JOSH_SPAN  = 12
 	GUILD_ID          = "715798257661509743"
 	JOSH_ROLE_ID      = "716065561385238589"
 	JOSH_CHANNEL_ID   = "715798258190123031"
@@ -86,34 +87,16 @@ func main() {
 		return
 	}
 
-	scheduler, err := gocron.NewScheduler()
-	if err != nil {
-		log.Fatalf("Error creating scheduler: %s", err.Error())
-	}
-	scheduler.Start()
-	defer scheduler.Shutdown()
-
-	_, err = scheduler.NewJob(
-		gocron.CronJob(
-			"0 2 * * 0",
-			false,
-		),
-		gocron.NewTask(
-			dmJoshOtw,
-			dg,
-		),
-	)
-	if err != nil {
-		log.Fatalf("Error scheduling job: %s", err.Error())
-	}
-
-	fmt.Println("Created josh of the week scheduler successfully.")
-
 	if DebugMode {
 		fmt.Println("WARNING: Debug mode activated. Server access not restricted, API requests not being made.")
 	}
-	fmt.Println("Bot running! Use Ctrl-C to exit.")
-	checkUsernames(dg)
+
+	err = InitializeState(dg)
+	if err != nil {
+		return
+	}
+
+	fmt.Println("Bot startup successful! Use Ctrl-C to exit.")
 
 	sigchannel := make(chan os.Signal, 1)
 	signal.Notify(sigchannel, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
