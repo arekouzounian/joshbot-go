@@ -73,7 +73,6 @@ def test():
     return '<h1>josh</h1>'
 
 
-#TODO: update joshlog to be in reverse chronological order 
 # new josh message 
 @app.route("/api/v1/newjosh", methods=['POST'])
 def newJosh():     
@@ -91,19 +90,9 @@ def newJosh():
         return missingFieldsErr(missingFields)
     
 
-    def prepend_line(file_name, line):
-        dummy_file = file_name + '.bak'
-        with open(file_name, 'r') as read_obj, open(dummy_file, 'w') as write_obj:
-            write_obj.write(line + '\n')
-            for line in read_obj:
-                write_obj.write(line)
-        os.remove(file_name)
-        os.rename(dummy_file, file_name)
-
-
-    
-    csv_line = f"{json['unixTimestamp']},{json['userID']},{json['joshInt']}"
-    prepend_line(joshTable, csv_line)
+    with open(joshTable, mode='a') as joshlog: 
+        writer = csv.writer(joshlog)
+        writer.writerow([json['unixTimestamp'], json['userID'], json['joshInt']])
 
     userRow = -1
     table = []
@@ -181,7 +170,6 @@ def memberUpdate():
                 
 
 
-#TODO: update this to only grab first line (given that it's stored in reverse chrono order)
 
 # number of seconds since last josh 
 @app.route("/api/v1/lastjosh", methods=['GET'])
@@ -189,11 +177,6 @@ def timeSinceLastJosh():
     # check log for last josh 
 
     if os.path.exists(joshTable):
-        # with open(joshTable, mode='r') as csv_file: 
-        #     reader = csv.reader(csv_file)
-        #     line = next(reader)
-        #     timestamp = line[JOSH_TABLE_TIMESTAMP_OFFSET]
-
         timestamp = int(os.path.getmtime(joshTable))
 
         if timestamp == 0: 

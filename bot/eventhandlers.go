@@ -80,7 +80,7 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 			DeleteMsg(session, message.ChannelID, message.ID)
 			DMUser(session, message.Author.ID, fmt.Sprintf("Double-josh detected: do not double josh within the span of %d hours", DOUBLE_JOSH_SPAN))
 		} else {
-			// non-double josh
+			// valid josh
 			reqData.JoshInt = 1
 		}
 	}
