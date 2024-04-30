@@ -74,6 +74,12 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 		DeleteMsg(session, message.ChannelID, message.ID)
 
 	} else { // josh message
+
+		if LastMsg == nil {
+			log.Fatalf("LastMsg nil, unable to check for double-josh")
+			return // unecessary but a good indicator that this function will be terminating here
+		}
+
 		time_gap := time.Since(LastMsg.Timestamp)
 		if LastMsg.Author.ID == message.Author.ID && time_gap < (time.Hour*DOUBLE_JOSH_SPAN) {
 			log.Printf("User %s sent a double-josh", message.Author.Username)
@@ -82,9 +88,9 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 		} else {
 			// valid josh
 			reqData.JoshInt = 1
+			LastMsg = message.Message
 		}
 	}
-	LastMsg = message.Message
 
 	// Marshal data for request body
 	json, err := json.Marshal(reqData)
