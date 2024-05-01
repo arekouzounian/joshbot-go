@@ -12,11 +12,13 @@ import (
 )
 
 var (
-	Token        string
-	DebugMode    bool
-	GenTableMode bool
-	LogFile      string
-	LastMsg      *discordgo.Message
+	Token             string
+	DebugMode         bool
+	SlashCommandDebug bool
+	GenTableMode      bool
+	RmCmdMode         bool
+	LogFile           string
+	LastMsg           *discordgo.Message
 )
 
 // hardcoded server ID; allows testing on other server
@@ -37,7 +39,9 @@ const (
 func init() {
 	flag.StringVar(&Token, "t", "", "Bot Token")
 	flag.BoolVar(&DebugMode, "d", false, "sets the bot to debug mode")
-	flag.BoolVar(&GenTableMode, "g", false, "will use the bot to generate user table and josh log table, then exits.")
+	flag.BoolVar(&SlashCommandDebug, "sd", false, "sets the bot to slash command debug mode")
+	flag.BoolVar(&GenTableMode, "gentable", false, "will use the bot to generate user table and josh log table, then exits.")
+	flag.BoolVar(&RmCmdMode, "rmcmd", false, "will delete all registered slash commands, then exits.")
 	flag.StringVar(&LogFile, "o", "./joshbot.log", "The file to output logs to. By default, creates a file in the current directory named 'joshbot.log'")
 	flag.Parse()
 }
@@ -63,14 +67,22 @@ func main() {
 	}
 
 	log.Println("Discord session started")
+	defer log.Printf("Discord session ended\n\n")
 
 	// https://discord.com/developers/docs/topics/gateway#gateway-intents
 	dg.Identify.Intents = discordgo.IntentGuildMessages | discordgo.IntentGuildMembers | discordgo.IntentsDirectMessages
 
-	dg.AddHandler(messageCreate)
+	if !SlashCommandDebug {
+		dg.AddHandler(messageCreate)
+	}
 	dg.AddHandler(userJoin)
 	dg.AddHandler(userUpdate)
 	dg.AddHandler(messageUpdate)
+	dg.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		if handler, exists := commandHandlers[i.ApplicationCommandData().Name]; exists {
+			handler(s, i)
+		}
+	})
 
 	err = dg.Open()
 	if err != nil {
@@ -83,12 +95,23 @@ func main() {
 		err = GenTables(dg, "./joshlog.csv", "./users.csv")
 		if err == nil {
 			fmt.Println("Tables generated successfully at './joshlog.csv', './users.csv'")
+		} // error printing already done internally
+		return
+	} else if RmCmdMode {
+		fmt.Println("Entering command cleanup mode...")
+		err = CleanupGlobalCommands(dg)
+		if err == nil {
+			fmt.Println("Commands deleted successfully.")
+		} else {
+			fmt.Printf("Error deleting application command(s): %s\n", err.Error())
 		}
 		return
 	}
 
 	if DebugMode {
 		fmt.Println("WARNING: Debug mode activated. Server access not restricted, API requests not being made.")
+	} else if SlashCommandDebug {
+		fmt.Println("WARNING: Slash Command Debug mode activated. Message create hook not being checked.")
 	}
 
 	err = InitializeState(dg)
@@ -102,5 +125,5 @@ func main() {
 	signal.Notify(sigchannel, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sigchannel
 
-	log.Printf("Received interrupt, shutting down\n\n")
+	log.Printf("Received interrupt, shutting down\n")
 }

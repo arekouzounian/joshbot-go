@@ -34,7 +34,8 @@ func InitializeState(session *discordgo.Session) error {
 		),
 	)
 	if err != nil {
-		log.Fatalf("Error scheduling job: %s", err.Error())
+		log.Printf("Error scheduling job: %s", err.Error())
+		return err
 	}
 	log.Println("Created josh of the week scheduler successfully.")
 
@@ -46,6 +47,19 @@ func InitializeState(session *discordgo.Session) error {
 	LastMsg = msg[0]
 
 	checkUsernames(session)
+
+	inputID := ""
+	if SlashCommandDebug {
+		inputID = "779964589768179742"
+	}
+
+	err = UpdateAndRegisterGlobalCommands(session, inputID)
+	if err != nil {
+		log.Printf("Error updating and/or registering slash commands: %s", err.Error())
+		return err
+	}
+
+	log.Println("Slash commands registered and operational.")
 
 	return nil
 }
