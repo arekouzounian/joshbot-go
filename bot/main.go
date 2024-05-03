@@ -54,7 +54,7 @@ func main() {
 
 	file, err := os.OpenFile(LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		log.Fatalf("Error opening logfile: %s could not be opened.", LogFile)
+		log.Printf("Fatal: error opening logfile: %s could not be opened.", LogFile)
 		return
 	}
 	defer file.Close()
@@ -63,7 +63,8 @@ func main() {
 
 	dg, err := discordgo.New("Bot " + Token)
 	if err != nil {
-		log.Fatalf("Error creating discord session: %s\n", err.Error())
+		log.Printf("Error creating discord session: %s\n", err.Error())
+		return
 	}
 
 	log.Println("Discord session started")
@@ -86,7 +87,8 @@ func main() {
 
 	err = dg.Open()
 	if err != nil {
-		log.Fatalf("Error opening discord connection: %s", err.Error())
+		log.Printf("Error opening discord connection: %s", err.Error())
+		return
 	}
 	defer dg.Close()
 
@@ -114,8 +116,10 @@ func main() {
 		fmt.Println("WARNING: Slash Command Debug mode activated. Message create hook not being checked.")
 	}
 
-	err = InitializeState(dg)
-	if err != nil {
+	defer AtExit() //needs to be deferred to catch a panic
+
+	success := InitializeState(dg)
+	if !success {
 		return
 	}
 

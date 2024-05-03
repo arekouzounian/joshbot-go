@@ -52,7 +52,7 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 	if channel.IsThread() {
 		_, err := session.ChannelDelete(channel.ID)
 		if err != nil {
-			log.Fatalf("Error deleting thread channel: %s", err.Error())
+			log.Printf("Error deleting thread channel: %s", err.Error())
 		}
 		return
 	}
@@ -76,8 +76,7 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 	} else { // josh message
 
 		if LastMsg == nil {
-			log.Fatalf("LastMsg nil, unable to check for double-josh")
-			return // unecessary but a good indicator that this function will be terminating here
+			panic("LastMsg nil, unable to check for double-josh")
 		}
 
 		time_gap := time.Since(LastMsg.Timestamp)

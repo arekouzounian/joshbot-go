@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -11,13 +12,14 @@ import (
 )
 
 // Initializes any variables needed for later use; intended to be called shortly after session opens.
-// Any error returned should be a fatal error.
-func InitializeState(session *discordgo.Session) error {
+// Returns true if successful, false if there were fatal errors
+func InitializeState(session *discordgo.Session) bool {
 
+	// setting up scheduler
 	scheduler, err := gocron.NewScheduler()
 	if err != nil {
 		log.Printf("Error creating scheduler: %s", err.Error())
-		return err
+		return false
 	}
 	scheduler.Start()
 	defer scheduler.Shutdown()
@@ -35,33 +37,54 @@ func InitializeState(session *discordgo.Session) error {
 	)
 	if err != nil {
 		log.Printf("Error scheduling job: %s", err.Error())
-		return err
+		return false
 	}
 	log.Println("Created josh of the week scheduler successfully.")
 
+	// setting last message to check for double josh
 	msg, err := session.ChannelMessages(JOSH_CHANNEL_ID, 1, "", "", "")
 	if err != nil {
 		log.Printf("Error getting last message: %s", err.Error())
-		return err
+		return false
 	}
 	LastMsg = msg[0]
 
+	// checks to see if users are named josh
 	checkUsernames(session)
 
+	// slash command initialization
 	inputID := ""
 	if SlashCommandDebug {
 		inputID = "779964589768179742"
 	}
-
 	err = UpdateAndRegisterGlobalCommands(session, inputID)
 	if err != nil {
 		log.Printf("Error updating and/or registering slash commands: %s", err.Error())
-		return err
+		return false
 	}
-
 	log.Println("Slash commands registered and operational.")
 
-	return nil
+	// Init TableHolder
+	if _, err := os.Stat(JOSHCOIN_FILE_DEFAULT); os.IsNotExist(err) {
+		TableHolder = &JoshCoinTableHolder{
+			DailyCoinsEarned: make(map[string]int),
+			CoinsBeforeToday: make(map[string]int),
+		}
+	} else {
+		err := DeserializeTablesFromFile(JOSHCOIN_FILE_DEFAULT)
+		if err != nil {
+			log.Printf("Error getting tables from file: %s", err.Error())
+			panic(err.Error())
+		}
+	}
+
+	return true
+}
+
+// Does any tasks that need to be done at exit
+// Should theoretically catch any panics
+func AtExit() {
+	SerializeTablesToFile(JOSHCOIN_FILE_DEFAULT)
 }
 
 func DeleteMsg(session *discordgo.Session, channelID string, messageID string) {
