@@ -66,10 +66,7 @@ func InitializeState(session *discordgo.Session) bool {
 
 	// Init TableHolder
 	if _, err := os.Stat(JOSHCOIN_FILE_DEFAULT); os.IsNotExist(err) {
-		TableHolder = &JoshCoinTableHolder{
-			DailyCoinsEarned: make(map[string]int),
-			CoinsBeforeToday: make(map[string]int),
-		}
+		TableHolder = NewJoshCoinTableHolder()
 	} else {
 		err := DeserializeTablesFromFile(JOSHCOIN_FILE_DEFAULT)
 		if err != nil {
