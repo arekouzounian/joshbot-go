@@ -73,9 +73,7 @@ func main() {
 	// https://discord.com/developers/docs/topics/gateway#gateway-intents
 	dg.Identify.Intents = discordgo.IntentGuildMessages | discordgo.IntentGuildMembers | discordgo.IntentsDirectMessages
 
-	if !SlashCommandDebug {
-		dg.AddHandler(messageCreate)
-	}
+	dg.AddHandler(messageCreate)
 	dg.AddHandler(userJoin)
 	dg.AddHandler(userUpdate)
 	dg.AddHandler(messageUpdate)

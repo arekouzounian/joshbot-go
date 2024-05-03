@@ -35,6 +35,7 @@ func messageUpdate(session *discordgo.Session, message *discordgo.MessageUpdate)
 // event handler for whenever a message is sent
 func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate) {
 	// Checking if message should be ignored
+
 	if !DebugMode && message.GuildID != GUILD_ID {
 		return
 	}
@@ -74,7 +75,6 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 		DeleteMsg(session, message.ChannelID, message.ID)
 
 	} else { // josh message
-
 		if LastMsg == nil {
 			panic("LastMsg nil, unable to check for double-josh")
 		}
@@ -88,6 +88,7 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 			// valid josh
 			reqData.JoshInt = 1
 			LastMsg = message.Message
+			JoshCoinGenerateCheck(session, message.Message)
 		}
 	}
 

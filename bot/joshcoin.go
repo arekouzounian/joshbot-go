@@ -2,15 +2,17 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/rand"
 	"os"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
 
 const (
-	JOSHCOIN_CHANCE_DEFAULT = 5
+	JOSHCOIN_CHANCE_DEFAULT = 20
 	DAILY_MAX               = 3
 	JOSHCOIN_FILE_DEFAULT   = "./joshcointables.json"
 )
@@ -22,14 +24,28 @@ var (
 // checks if a josh coin is generated on a message
 // will DM the user that they have received a josh coin
 func JoshCoinGenerateCheck(session *discordgo.Session, message *discordgo.Message) {
+	if message.Author.ID == session.State.User.ID {
+		return
+	}
+
 	// generates in [1, 100]
 	roll := (rand.Int() % 100) + 1
+
+	if SlashCommandDebug {
+		fmt.Printf("User %s rolled %d\n", message.Author.Username, roll)
+	}
+
+	if _, exists := TableHolder.DailyCoinsEarned[message.Author.ID]; !exists {
+		// create default entries
+		TableHolder.DailyCoinsEarned[message.Author.ID] = 0
+		TableHolder.CoinsBeforeToday[message.Author.ID] = 0
+	}
 
 	if roll <= JOSHCOIN_CHANCE_DEFAULT && TableHolder.DailyCoinsEarned[message.Author.ID] < DAILY_MAX {
 		// they got a josh coin
 		log.Printf("User %s got a josh coin\n", message.Author.Username)
 		TableHolder.DailyCoinsEarned[message.Author.ID] += 1
-		DMUser(session, message.Author.ID, "josh, you just earned a josh coin")
+		DMUser(session, message.Author.ID, fmt.Sprintf("josh, you just earned a josh coin. you can earn `%d` more before you hit your daily limit.", DAILY_MAX-TableHolder.DailyCoinsEarned[message.Author.ID]))
 	}
 }
 
@@ -44,15 +60,24 @@ func DeserializeTablesFromFile(input_file string) error {
 	if err != nil {
 		return err
 	}
-
-	tablesFromFile := &JoshCoinTableHolder{}
-
-	err = json.Unmarshal(b, tablesFromFile)
+	stat, err := os.Stat(input_file)
 	if err != nil {
 		return err
 	}
 
+	tablesFromFile := &JoshCoinTableHolder{}
+	err = json.Unmarshal(b, tablesFromFile)
+	if err != nil {
+		return err
+	}
 	TableHolder = tablesFromFile
+
+	if time.Now().YearDay() != stat.ModTime().YearDay() {
+		for user, coins := range TableHolder.DailyCoinsEarned {
+			TableHolder.CoinsBeforeToday[user] += coins
+			TableHolder.DailyCoinsEarned[user] = 0
+		}
+	}
 
 	return nil
 }

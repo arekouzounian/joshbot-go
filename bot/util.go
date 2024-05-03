@@ -81,7 +81,10 @@ func InitializeState(session *discordgo.Session) bool {
 // Does any tasks that need to be done at exit
 // Should theoretically catch any panics
 func AtExit() {
-	SerializeTablesToFile(JOSHCOIN_FILE_DEFAULT)
+	err := SerializeTablesToFile(JOSHCOIN_FILE_DEFAULT)
+	if err != nil {
+		log.Printf("Error serializig tables to file: %s", err.Error())
+	}
 }
 
 func DeleteMsg(session *discordgo.Session, channelID string, messageID string) {
@@ -105,6 +108,10 @@ func DeleteMsg(session *discordgo.Session, channelID string, messageID string) {
 }
 
 func DMUser(session *discordgo.Session, userID string, message string) error {
+	if userID == session.State.User.ID {
+		return nil
+	}
+
 	channel, err := session.UserChannelCreate(userID)
 	if err != nil {
 		log.Printf("Error creating DM channel with user %s: %s", userID, err.Error())
