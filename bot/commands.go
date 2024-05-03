@@ -37,12 +37,30 @@ var (
 			postCommandLogging(i, "help", err)
 		},
 		"joshcoin": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "hahahahah YOU SUCK!!",
-				},
-			})
+			var userID string
+			if i.User == nil {
+				userID = i.Member.User.ID
+			} else {
+				userID = i.User.ID
+			}
+
+			embed := GenJoshCoinCommandEmbed(userID)
+			var err error
+			if embed != nil {
+				err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Embeds: []*discordgo.MessageEmbed{GenJoshCoinCommandEmbed(userID)},
+					},
+				})
+			} else {
+				err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Content: "No tables exist!!",
+					},
+				})
+			}
 
 			postCommandLogging(i, "joshcoin", err)
 		},
@@ -148,27 +166,6 @@ func UpdateAndRegisterGlobalCommands(session *discordgo.Session, guildID string)
 	}
 
 	return nil
-}
-
-func GenHelpCommandEmbed() *discordgo.MessageEmbed {
-	fields := make([]*discordgo.MessageEmbedField, len(globalCommands))
-
-	for i, cmd := range globalCommands {
-		fields[i] = &discordgo.MessageEmbedField{
-			Name:  cmd.Name,
-			Value: cmd.Description,
-		}
-	}
-
-	embed := discordgo.MessageEmbed{
-		Title: "joshbot commands",
-		Description: `pay attention, josh. these are the commands you can use.
-		
-Make sure you always use commands in the DM. If you use it on the server it will count towards a non-josh. josh`,
-		Fields: fields,
-	}
-
-	return &embed
 }
 
 func RegisterGlobalCommand(session *discordgo.Session, cmd *discordgo.ApplicationCommand) {

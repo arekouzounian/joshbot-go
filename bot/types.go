@@ -11,3 +11,20 @@ type JoshUpdateEvent struct {
 	Username string `json:"username"`
 	Avatar   string `json:"avatar"`
 }
+
+// stores tables for easy serialization/deserialization
+type JoshCoinTableHolder struct {
+	// userID to number of coins they earned today.
+	DailyCoinsEarned map[string]int `json:"dailyCoinsEarned"`
+	// userID to number of coins they earned before today
+	CoinsBeforeToday map[string]int `json:"coinsBeforeToday"`
+}
+
+func NewJoshCoinTableHolder() *JoshCoinTableHolder {
+	new := &JoshCoinTableHolder{
+		DailyCoinsEarned: make(map[string]int),
+		CoinsBeforeToday: make(map[string]int),
+	}
+
+	return new
+}
