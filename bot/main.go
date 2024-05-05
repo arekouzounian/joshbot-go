@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/go-co-op/gocron/v2"
 )
 
 var (
@@ -19,6 +20,7 @@ var (
 	RmCmdMode         bool
 	LogFile           string
 	LastMsg           *discordgo.Message
+	Scheduler         gocron.Scheduler
 )
 
 // hardcoded server ID; allows testing on other server
@@ -73,9 +75,7 @@ func main() {
 	// https://discord.com/developers/docs/topics/gateway#gateway-intents
 	dg.Identify.Intents = discordgo.IntentGuildMessages | discordgo.IntentGuildMembers | discordgo.IntentsDirectMessages
 
-	if !SlashCommandDebug {
-		dg.AddHandler(messageCreate)
-	}
+	dg.AddHandler(messageCreate)
 	dg.AddHandler(userJoin)
 	dg.AddHandler(userUpdate)
 	dg.AddHandler(messageUpdate)

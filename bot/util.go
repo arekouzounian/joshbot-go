@@ -1,11 +1,10 @@
 package main
 
 import (
-	"io"
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/go-co-op/gocron/v2"
@@ -14,32 +13,21 @@ import (
 // Initializes any variables needed for later use; intended to be called shortly after session opens.
 // Returns true if successful, false if there were fatal errors
 func InitializeState(session *discordgo.Session) bool {
-
 	// setting up scheduler
-	scheduler, err := gocron.NewScheduler()
+	// can't use implicit declaration or else 'Scheduler' will not be stored globally
+	var err error
+	Scheduler, err = gocron.NewScheduler()
 	if err != nil {
 		log.Printf("Error creating scheduler: %s", err.Error())
 		return false
 	}
-	scheduler.Start()
-	defer scheduler.Shutdown()
+	Scheduler.Start()
 
-	// Job to DM the josh of the week every week
-	_, err = scheduler.NewJob(
-		gocron.CronJob(
-			"0 2 * * 0",
-			false,
-		),
-		gocron.NewTask(
-			dmJoshOtw,
-			session,
-		),
-	)
+	err = scheduleJobs(session)
 	if err != nil {
-		log.Printf("Error scheduling job: %s", err.Error())
+		log.Printf("Error scheduling job(s): %s", err.Error())
 		return false
 	}
-	log.Println("Created josh of the week scheduler successfully.")
 
 	// setting last message to check for double josh
 	msg, err := session.ChannelMessages(JOSH_CHANNEL_ID, 1, "", "", "")
@@ -81,7 +69,15 @@ func InitializeState(session *discordgo.Session) bool {
 // Does any tasks that need to be done at exit
 // Should theoretically catch any panics
 func AtExit() {
-	SerializeTablesToFile(JOSHCOIN_FILE_DEFAULT)
+	err := SerializeTablesToFile(JOSHCOIN_FILE_DEFAULT)
+	if err != nil {
+		log.Printf("Error serializig tables to file: %s", err.Error())
+	}
+
+	err = Scheduler.Shutdown()
+	if err != nil {
+		log.Printf("Error shutting down scheduler: %s", err.Error())
+	}
 }
 
 func DeleteMsg(session *discordgo.Session, channelID string, messageID string) {
@@ -105,6 +101,10 @@ func DeleteMsg(session *discordgo.Session, channelID string, messageID string) {
 }
 
 func DMUser(session *discordgo.Session, userID string, message string) error {
+	if userID == session.State.User.ID {
+		return nil
+	}
+
 	channel, err := session.UserChannelCreate(userID)
 	if err != nil {
 		log.Printf("Error creating DM channel with user %s: %s", userID, err.Error())
@@ -129,18 +129,39 @@ func dmJoshOtw(session *discordgo.Session) {
 	}
 	defer resp.Body.Close()
 
-	buf := new(strings.Builder)
-	_, err = io.Copy(buf, resp.Body)
+	var respBodyData [][]string
+
+	decoder := json.NewDecoder(resp.Body)
+	err = decoder.Decode(&respBodyData)
 	if err != nil {
-		log.Printf("Couldn't read request response: %s", err.Error())
+		log.Printf("Error decoding json body data: %s", err.Error())
+		return
 	}
 
-	fields := strings.Split(buf.String(), ",")
+	fields := respBodyData[0]
 
 	err = DMUser(session, fields[0], "congratulations josh, you are now this week's josh of the week. http://joshbot.xyz")
 
 	if err == nil {
 		log.Printf("Sent congratulatory message to user %s", fields[1])
+	} else {
+		log.Printf("Error sending dm to user %s: %s", fields[1], err.Error())
+	}
+}
+
+// Backs up the josh coin tables to the serialization file
+// updates internal TableHolder, migrating daily coins over to coins before today
+func joshCoinDailyReset(session *discordgo.Session) {
+	for userID, coins := range TableHolder.DailyCoinsEarned {
+		TableHolder.CoinsBeforeToday[userID] += coins
+		TableHolder.DailyCoinsEarned[userID] = 0
+	}
+
+	err := SerializeTablesToFile(JOSHCOIN_FILE_DEFAULT)
+	if err != nil {
+		log.Printf("Error serializing tables on daily reset: %s", err.Error())
+	} else {
+		log.Printf("Successful daily table reset")
 	}
 }
 
@@ -161,4 +182,40 @@ func checkUsernames(session *discordgo.Session) {
 			}
 		}
 	}
+}
+
+// function that schedules all jobs; broken into own function for cleanliness
+func scheduleJobs(session *discordgo.Session) error {
+	// Job to DM the josh of the week every week
+	_, err := Scheduler.NewJob(
+		gocron.CronJob(
+			"0 2 * * 0",
+			false,
+		),
+		gocron.NewTask(
+			dmJoshOtw,
+			session,
+		),
+	)
+	if err != nil {
+		return err
+	}
+	log.Println("Created josh of the week scheduler successfully.")
+
+	_, err = Scheduler.NewJob(
+		gocron.CronJob(
+			"0 0 * * *",
+			false,
+		),
+		gocron.NewTask(
+			joshCoinDailyReset,
+			session,
+		),
+	)
+	if err != nil {
+		return err
+	}
+	log.Println("Created josh coin daily reset job successfully.")
+
+	return nil
 }

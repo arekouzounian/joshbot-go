@@ -27,6 +27,17 @@ var (
 
 	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
 		"help": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			if !commandIsInDM(s, i) {
+				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Flags:   discordgo.MessageFlagsEphemeral,
+						Content: "Commands can only be invoked in DMs",
+					},
+				})
+				return
+			}
+
 			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
@@ -37,6 +48,17 @@ var (
 			postCommandLogging(i, "help", err)
 		},
 		"joshcoin": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			if !commandIsInDM(s, i) {
+				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Flags:   discordgo.MessageFlagsEphemeral,
+						Content: "Commands can only be invoked in DMs",
+					},
+				})
+				return
+			}
+
 			var userID string
 			if i.User == nil {
 				userID = i.Member.User.ID
@@ -66,6 +88,15 @@ var (
 		},
 	}
 )
+
+func commandIsInDM(s *discordgo.Session, i *discordgo.InteractionCreate) bool {
+	channel, err := s.Channel(i.ChannelID)
+	if err != nil {
+		log.Printf("Error checking if channel is DM: %s", err.Error())
+	}
+
+	return channel.Type == discordgo.ChannelTypeDM
+}
 
 func postCommandLogging(i *discordgo.InteractionCreate, command_name string, err error) {
 	if err != nil {
