@@ -89,6 +89,10 @@ func SerializeTablesToFile(output_file string) error {
 		output_file = JOSHCOIN_FILE_DEFAULT
 	}
 
+	if TableHolder == nil {
+		TableHolder = NewJoshCoinTableHolder()
+	}
+
 	b, err := json.Marshal(*TableHolder)
 	if err != nil {
 		return err
@@ -103,36 +107,12 @@ func SerializeTablesToFile(output_file string) error {
 }
 
 /*
-
-Naive Approach:
-- store cached copy in memory as obj
-- whenever cached copy is updated then serialize changes to file
-	- a bit costly for cases w/ a large amount of users
-- on startup, get cached copy by deserializing file
-
-- Advantages:
-	- simpler to implement
-	- makes it easy to deal with daily coin reset
-- Disadvantages:
-	- performance is slow
-	- doesn't scale well with high volume of messages or users
-
-Alternative:
+Current Approach:
 - store cached copy in memory as obj
 - only serialize to file on bot shutdown
-	- OR upon daily coin amount reset (?)
+	- OR upon daily coin amount reset
 	- theoretically not even necessary to do it on daily reset, but it's better to periodically "back up"
 - on startup, get cached copy by deserializing file
-
-- pretty much opposite advantages/disadvantages as the naive approach
-
-
-Idea:
-- users can claim one coin per day
-- users have a chance get coins from messages
-- users have a daily limit of how many coins they can earn per day
-
-- daily coins tracked in struct (id->coins earned that day)
-- every day at midnight that struct is reset and changes are pushed to the other struct (and serialized depending on serialization schema)
-
+- serialization happens only on daily reset or bot shutdown
+- deserialization happens only on bot startup
 */

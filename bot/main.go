@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/go-co-op/gocron/v2"
 )
 
 var (
@@ -19,6 +20,7 @@ var (
 	RmCmdMode         bool
 	LogFile           string
 	LastMsg           *discordgo.Message
+	Scheduler         gocron.Scheduler
 )
 
 // hardcoded server ID; allows testing on other server
