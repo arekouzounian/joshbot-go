@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	JOSHCOIN_CHANCE_DEFAULT = 20
+	JOSHCOIN_CHANCE_DEFAULT = 40
 	DAILY_MAX               = 3
 	JOSHCOIN_FILE_DEFAULT   = "./joshcointables.json"
 )
@@ -35,14 +35,22 @@ func JoshCoinGenerateCheck(session *discordgo.Session, message *discordgo.Messag
 		fmt.Printf("User %s rolled %d\n", message.Author.Username, roll)
 	}
 
+	var joshCoinSuccess bool
+
 	if _, exists := TableHolder.DailyCoinsEarned[message.Author.ID]; !exists {
 		// create default entries
 		TableHolder.DailyCoinsEarned[message.Author.ID] = 0
 		TableHolder.CoinsBeforeToday[message.Author.ID] = 0
+	} else {
+		if TableHolder.DailyCoinsEarned[message.Author.ID] < 1 {
+			joshCoinSuccess = true
+		} else {
+			joshCoinSuccess = roll <= JOSHCOIN_CHANCE_DEFAULT && TableHolder.DailyCoinsEarned[message.Author.ID] < DAILY_MAX
+		}
 	}
 
-	if roll <= JOSHCOIN_CHANCE_DEFAULT && TableHolder.DailyCoinsEarned[message.Author.ID] < DAILY_MAX {
-		// they got a josh coin
+	// they got a josh coin
+	if joshCoinSuccess {
 		log.Printf("User %s got a josh coin\n", message.Author.Username)
 		TableHolder.DailyCoinsEarned[message.Author.ID] += 1
 		DMUser(session, message.Author.ID, fmt.Sprintf("josh, you just earned a josh coin. you can earn `%d` more before you hit your daily limit.", DAILY_MAX-TableHolder.DailyCoinsEarned[message.Author.ID]))
