@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	JOSHCOIN_CHANCE_DEFAULT = 40
-	DAILY_MAX               = 3
+	JOSHCOIN_CHANCE_DEFAULT = 50
+	DAILY_MAX               = 2
 	JOSHCOIN_FILE_DEFAULT   = "./joshcointables.json"
 )
 
@@ -42,6 +42,7 @@ func JoshCoinGenerateCheck(session *discordgo.Session, message *discordgo.Messag
 		TableHolder.DailyCoinsEarned[message.Author.ID] = 0
 		TableHolder.CoinsBeforeToday[message.Author.ID] = 0
 	} else {
+		// first is always guaranteed
 		if TableHolder.DailyCoinsEarned[message.Author.ID] < 1 {
 			joshCoinSuccess = true
 		} else {

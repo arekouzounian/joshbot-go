@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -72,4 +73,18 @@ func GenJoshCoinCommandEmbed(userID string) *discordgo.MessageEmbed {
 	}
 
 	return &embed
+}
+
+func GenAnnouncementEmbed(input_file string) (*discordgo.MessageEmbed, error) {
+	f, err := os.ReadFile(input_file)
+	if err != nil {
+		return nil, err
+	}
+
+	embed := discordgo.MessageEmbed{
+		Title:       "Announcement",
+		Description: string(f),
+	}
+
+	return &embed, nil
 }

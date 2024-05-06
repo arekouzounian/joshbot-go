@@ -119,6 +119,25 @@ func DMUser(session *discordgo.Session, userID string, message string) error {
 	return err
 }
 
+func DMUserEmbed(session *discordgo.Session, userID string, embed *discordgo.MessageEmbed) error {
+	if userID == session.State.User.ID {
+		return nil
+	}
+
+	channel, err := session.UserChannelCreate(userID)
+	if err != nil {
+		log.Printf("Error creating DM channel with user %s: %s", userID, err.Error())
+		return err
+	}
+
+	_, err = session.ChannelMessageSendEmbed(channel.ID, embed)
+	if err != nil {
+		log.Printf("Error DM'ing user: %s", err.Error())
+	}
+
+	return err
+}
+
 // Sends a DM to the Josh of the Week.
 // Any failures will be logged, but won't be fatal.
 func dmJoshOtw(session *discordgo.Session) {

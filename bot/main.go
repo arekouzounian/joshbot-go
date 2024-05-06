@@ -16,6 +16,8 @@ var (
 	Token             string
 	DebugMode         bool
 	SlashCommandDebug bool
+	AnnouncementMode  bool
+	AnnouncementFile  string
 	GenTableMode      bool
 	RmCmdMode         bool
 	LogFile           string
@@ -44,6 +46,8 @@ func init() {
 	flag.BoolVar(&SlashCommandDebug, "sd", false, "sets the bot to slash command debug mode")
 	flag.BoolVar(&GenTableMode, "gentable", false, "will use the bot to generate user table and josh log table, then exits.")
 	flag.BoolVar(&RmCmdMode, "rmcmd", false, "will delete all registered slash commands, then exits.")
+	flag.BoolVar(&AnnouncementMode, "announcement", false, "will take an announcement msg from an input file, then dm that announcement to every user")
+	flag.StringVar(&AnnouncementFile, "af", "", "the target file to use as an announcement message")
 	flag.StringVar(&LogFile, "o", "./joshbot.log", "The file to output logs to. By default, creates a file in the current directory named 'joshbot.log'")
 	flag.Parse()
 }
@@ -107,6 +111,44 @@ func main() {
 		} else {
 			fmt.Printf("Error deleting application command(s): %s\n", err.Error())
 		}
+		return
+	} else if AnnouncementMode {
+		fmt.Println("Entering Announcement mode...")
+		if AnnouncementFile == "" {
+			fmt.Println("You need to specify the target file with the -af flag.")
+			return
+		}
+
+		embed, err := GenAnnouncementEmbed(AnnouncementFile)
+		if err != nil {
+			fmt.Printf("Error generating announcement embed: %s\n", err.Error())
+			return
+		}
+
+		users, err := dg.GuildMembers(GUILD_ID, "", 1000)
+		if err != nil {
+			fmt.Printf("Error getting guild members: %s\n", err.Error())
+			return
+		}
+
+		for _, user := range users {
+			if user.User.Bot {
+				continue
+			}
+
+			// for testing
+			// if user.User.ID != "MY USER ID FOR TESTING" {
+			// 	continue
+			// }
+
+			err := DMUserEmbed(dg, user.User.ID, embed)
+			if err != nil {
+				return
+			}
+			fmt.Printf("Sent announcement to user %s successfully.", user.User.Username)
+		}
+
+		fmt.Println("Announcements sent successfully.")
 		return
 	}
 
