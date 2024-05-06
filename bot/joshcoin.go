@@ -41,13 +41,13 @@ func JoshCoinGenerateCheck(session *discordgo.Session, message *discordgo.Messag
 		// create default entries
 		TableHolder.DailyCoinsEarned[message.Author.ID] = 0
 		TableHolder.CoinsBeforeToday[message.Author.ID] = 0
+	}
+
+	// first is always guaranteed
+	if TableHolder.DailyCoinsEarned[message.Author.ID] < 1 {
+		joshCoinSuccess = true
 	} else {
-		// first is always guaranteed
-		if TableHolder.DailyCoinsEarned[message.Author.ID] < 1 {
-			joshCoinSuccess = true
-		} else {
-			joshCoinSuccess = roll <= JOSHCOIN_CHANCE_DEFAULT && TableHolder.DailyCoinsEarned[message.Author.ID] < DAILY_MAX
-		}
+		joshCoinSuccess = roll <= JOSHCOIN_CHANCE_DEFAULT && TableHolder.DailyCoinsEarned[message.Author.ID] < DAILY_MAX
 	}
 
 	// they got a josh coin
