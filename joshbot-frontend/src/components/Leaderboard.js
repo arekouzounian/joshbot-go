@@ -10,7 +10,8 @@ function Leaderboard(props) {
         padding: '1%', 
         fontSize: '80%', 
         color: 'white', 
-        width: '15%', 
+        minWidth: '15%',
+        maxWidth: '100%', 
         height: 'auto',
         margin: 'auto',
         marginTop: '5%',
@@ -33,8 +34,8 @@ function Leaderboard(props) {
             <h1>{props.title}</h1>
             {users.length > 0 && 
                 users.map((user, index) => (
-                    <Box sx ={{ borderRadius: 1, border: '1px solid gray', width: 'auto', height: '20%', margin: '5%', padding: '5%'}}>
-                    {index+1}. {user[props.keyIdx]}:{user[props.valueIdx]}
+                    <Box sx ={{ borderRadius: 1, border: '1px solid gray', width: 'auto', height: '20%', margin: '5%', padding: '5%', maxWidth: '100%'}}>
+                    {index+1}. {user[props.keyIdx]}: <b>{user[props.valueIdx]}</b>
                     </Box>
                 ))
             }

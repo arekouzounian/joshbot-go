@@ -22,9 +22,9 @@ function JoshOTW(props) {
     }, [props.API_URL]);
 
     return (
-        <div>
+        <div class='joshOtwWrapper'>
             <p>Josh Of The Week</p>
-            <Avatar src={avatar} alt="Avatar for this week's josh" sx={{width: '100%', height: '100%'}}></Avatar>
+            <Avatar src={avatar} alt="Avatar for this week's josh" sx={{width: '100%', height: '100%' }}></Avatar>
             <p>{username}</p>
         </div>
     )

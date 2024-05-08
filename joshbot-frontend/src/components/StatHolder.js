@@ -75,7 +75,8 @@ function StatHolder(props) {
         py: 0,
         borderRadius: 2,
         margin: '1%',
-        width: '10%',
+        minWidth: '10%',
+        maxWidth: '30%',
         border: '1px solid',
         borderColor: 'white',
         backgroundColor: 'gray'
