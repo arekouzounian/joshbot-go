@@ -1,7 +1,10 @@
 body {
   text-align: center;
-  background-color: #31304c; 
+  /* background-color: #31304c;  */
   color: white; 
+  background-image: url('./josh-purple.png');
+  background-size: 20%; 
+  background-repeat: repeat; 
 }
 
 .leaderboardsWrapper {
@@ -10,6 +13,11 @@ body {
 
 .leaderboardBoxWrapper {
   display: inline; 
+}
+
+.joshOtwWrapper {
+  border-radius: 50%; 
+  background-color: #31304c;
 }
 
 .statWrapper {

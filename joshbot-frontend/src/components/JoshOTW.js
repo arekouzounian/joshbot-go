@@ -23,9 +23,9 @@ function JoshOTW(props) {
 
     return (
         <div class='joshOtwWrapper'>
-            <p>Josh Of The Week</p>
+            <h2>Josh of the Week</h2>
             <Avatar src={avatar} alt="Avatar for this week's josh" sx={{width: '100%', height: '100%' }}></Avatar>
-            <p>{username}</p>
+            <p><b>{username}</b></p>
         </div>
     )
 }
