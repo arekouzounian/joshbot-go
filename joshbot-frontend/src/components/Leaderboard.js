@@ -8,7 +8,7 @@ function Leaderboard(props) {
         borderRadius: 1, 
         border: '1px solid gray', 
         padding: '1%', 
-        fontSize: '80%', 
+        fontSize: 'auto', 
         color: 'white', 
         minWidth: '15%',
         maxWidth: '100%', 
@@ -29,17 +29,19 @@ function Leaderboard(props) {
     }, [props.API_URL, props.endpoint]);
 
     return (
-        <Box 
-        sx={boxStyle}>
-            <h1>{props.title}</h1>
-            {users.length > 0 && 
-                users.map((user, index) => (
-                    <Box sx ={{ borderRadius: 1, border: '1px solid gray', width: 'auto', height: '20%', margin: '5%', padding: '5%', maxWidth: '100%'}}>
-                    {index+1}. {user[props.keyIdx]}: <b>{user[props.valueIdx]}</b>
-                    </Box>
-                ))
-            }
-        </Box>
+        <div className='leaderboardBoxWrapper'>
+            <Box 
+            sx={boxStyle} >
+                <h1>{props.title}</h1>
+                {users.length > 0 && 
+                    users.map((user, index) => (
+                        <Box sx ={{ borderRadius: 1, border: '1px solid gray', width: 'auto', height: '20%', margin: '5%', padding: '5%', maxWidth: '100%'}}>
+                        {index+1}. {user[props.keyIdx]}: <b>{user[props.valueIdx]}</b>
+                        </Box>
+                    ))
+                }
+            </Box>
+        </div>
     )
 }
 

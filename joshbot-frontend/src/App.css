@@ -5,7 +5,11 @@ body {
 }
 
 .leaderboardsWrapper {
-  display:inline;
+  display:block;
+}
+
+.leaderboardBoxWrapper {
+  display: inline; 
 }
 
 .statWrapper {
@@ -27,6 +31,11 @@ body {
 }
 
 
+@media (max-width: 440px) {
+  .leaderboardBoxWrapper {
+    display: block; 
+  }
+}
 
 /* .App-logo {
   height: 40vmin;
