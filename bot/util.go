@@ -208,7 +208,7 @@ func scheduleJobs(session *discordgo.Session) error {
 	// Job to DM the josh of the week every week
 	_, err := Scheduler.NewJob(
 		gocron.CronJob(
-			"0 2 * * 0",
+			"0 2 * * 1",
 			false,
 		),
 		gocron.NewTask(
