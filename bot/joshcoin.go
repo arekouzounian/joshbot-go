@@ -19,7 +19,64 @@ const (
 
 var (
 	TableHolder *JoshCoinTableHolder
+
+	DoubleJoshButton = &discordgo.Button{
+		Label:    "DoubleJosh",
+		Style:    discordgo.SecondaryButton,
+		Disabled: false,
+		Emoji: discordgo.ComponentEmoji{
+			Name:     "joshEmoji",
+			ID:       "766128277286682645",
+			Animated: false,
+		},
+		CustomID: "doubleJoshButton",
+	}
+
+	JoshopItems = []*JoshopItem{
+		{
+			Name: "Double Josh",
+			Description: `**Cost: 1 coin**
+Allows you to send a double josh once without penalty.
+`,
+			Button: DoubleJoshButton,
+		},
+	}
+
+	JoshopButtonRow = &discordgo.ActionsRow{
+		Components: []discordgo.MessageComponent{
+			DoubleJoshButton,
+		},
+	}
 )
+
+func GetTotalCoins(userID string) int {
+	today := GetDailyCoins(userID)
+	before := GetCoinsBeforeToday(userID)
+
+	return today + before
+}
+
+func GetDailyCoins(userID string) int {
+	coinsEarnedToday := 0
+	if ct, exists := TableHolder.DailyCoinsEarned[userID]; exists {
+		coinsEarnedToday = ct
+	} else {
+		TableHolder.DailyCoinsEarned[userID] = 0
+	}
+
+	return coinsEarnedToday
+}
+
+func GetCoinsBeforeToday(userID string) int {
+	coinsEarnedBeforeToday := 0
+	if cbt, exists := TableHolder.CoinsBeforeToday[userID]; exists {
+		coinsEarnedBeforeToday = cbt // not the fun kind :(
+	} else {
+		TableHolder.CoinsBeforeToday[userID] = 0
+	}
+
+	return coinsEarnedBeforeToday
+}
 
 // checks if a josh coin is generated on a message
 // will DM the user that they have received a josh coin

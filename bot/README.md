@@ -29,8 +29,3 @@ This folder contains all the code for the discord bot this project is built on.
   - If joshOTW has been modified and new joshOTW != old joshOTW, give the joshOTW user their bonus 
   - then update the internal cache to reflect joshOTW has been given their bonus 
 - coins earned per day per user is also stored in memory rather than the table, because it will clear periodically and it's expensive to check often 
-
-`joshcoin.csv`:
-```csv
-userID,josh_coin_count,joshPercent,joshPower,hsojPower
-```

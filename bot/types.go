@@ -1,5 +1,7 @@
 package main
 
+import "github.com/bwmarrin/discordgo"
+
 type NewUserMessage struct {
 	UserID        string `json:"userID"`        // Sender's user ID
 	UnixTimestamp int64  `json:"unixTimestamp"` // Timestamp of the message
@@ -18,6 +20,13 @@ type JoshCoinTableHolder struct {
 	DailyCoinsEarned map[string]int `json:"dailyCoinsEarned"`
 	// userID to number of coins they earned before today
 	CoinsBeforeToday map[string]int `json:"coinsBeforeToday"`
+}
+
+type JoshopItem struct {
+	Name        string
+	Description string
+	Cost        int
+	Button      *discordgo.Button
 }
 
 func NewJoshCoinTableHolder() *JoshCoinTableHolder {

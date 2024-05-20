@@ -23,18 +23,50 @@ var (
 			Type:         discordgo.ChatApplicationCommand,
 			DMPermission: &dmPermission,
 		},
+		{
+			Name:         "joshop",
+			Description:  "displays the josh coin shop",
+			Type:         discordgo.ChatApplicationCommand,
+			DMPermission: &dmPermission,
+		},
 	}
 
-	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
+	interactionHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
+		"joshop": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			if !commandIsInDM(s, i) {
+				ephemDMResponse(s, i)
+				return
+			}
+
+			user := getUserFromInteraction(i)
+
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Embeds: []*discordgo.MessageEmbed{GenJoshopEmbed(user.ID)},
+
+					Components: []discordgo.MessageComponent{
+						JoshopButtonRow,
+					},
+				},
+			})
+
+			postCommandLogging(i, "joshop", err)
+		},
+		"doubleJoshButton": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			userName := getUserFromInteraction(i).Username
+
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseUpdateMessage,
+				Data: &discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("Congrats %s, you just purchased a double josh.", userName),
+				},
+			})
+			postCommandLogging(i, "doubleJoshButton", err)
+		},
 		"help": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			if !commandIsInDM(s, i) {
-				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Flags:   discordgo.MessageFlagsEphemeral,
-						Content: "Commands can only be invoked in DMs",
-					},
-				})
+				ephemDMResponse(s, i)
 				return
 			}
 
@@ -49,13 +81,7 @@ var (
 		},
 		"joshcoin": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			if !commandIsInDM(s, i) {
-				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Flags:   discordgo.MessageFlagsEphemeral,
-						Content: "Commands can only be invoked in DMs",
-					},
-				})
+				ephemDMResponse(s, i)
 				return
 			}
 
@@ -89,13 +115,36 @@ var (
 	}
 )
 
+// responds to the interaction with a user-only message
+// used to tell the user the command can only be invoked in the DM
+func ephemDMResponse(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags:   discordgo.MessageFlagsEphemeral,
+			Content: "Commands can only be invoked in DMs",
+		},
+	})
+}
+
 func commandIsInDM(s *discordgo.Session, i *discordgo.InteractionCreate) bool {
+	if SlashCommandDebug {
+		return true
+	}
+
 	channel, err := s.Channel(i.ChannelID)
 	if err != nil {
 		log.Printf("Error checking if channel is DM: %s", err.Error())
 	}
 
 	return channel.Type == discordgo.ChannelTypeDM
+}
+
+func getUserFromInteraction(i *discordgo.InteractionCreate) *discordgo.User {
+	if i.User == nil {
+		return i.Member.User
+	}
+	return i.User
 }
 
 func postCommandLogging(i *discordgo.InteractionCreate, command_name string, err error) {

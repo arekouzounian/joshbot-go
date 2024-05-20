@@ -84,8 +84,17 @@ func main() {
 	dg.AddHandler(userUpdate)
 	dg.AddHandler(messageUpdate)
 	dg.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if handler, exists := commandHandlers[i.ApplicationCommandData().Name]; exists {
+		var name string
+		if i.Type == discordgo.InteractionApplicationCommand {
+			name = i.ApplicationCommandData().Name
+		} else {
+			name = i.MessageComponentData().CustomID
+		}
+
+		if handler, exists := interactionHandlers[name]; exists {
 			handler(s, i)
+		} else {
+			log.Printf("No handler exists for interaction %s", name)
 		}
 	})
 

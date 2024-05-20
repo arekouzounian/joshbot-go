@@ -34,24 +34,14 @@ func GenJoshCoinCommandEmbed(userID string) *discordgo.MessageEmbed {
 		return nil
 	}
 
-	coinsEarnedBeforeToday := 0
-	if cbt, exists := TableHolder.CoinsBeforeToday[userID]; exists {
-		coinsEarnedBeforeToday = cbt // not the fun kind :(
-	} else {
-		TableHolder.CoinsBeforeToday[userID] = 0
-	}
+	coinsEarnedBeforeToday := GetCoinsBeforeToday(userID)
 	beforeTodayField := &discordgo.MessageEmbedField{
 		Name:   "Josh Coins: Before Today",
 		Value:  fmt.Sprintf("You have earned `%d` josh coins before today", coinsEarnedBeforeToday),
 		Inline: false,
 	}
 
-	coinsEarnedToday := 0
-	if ct, exists := TableHolder.DailyCoinsEarned[userID]; exists {
-		coinsEarnedToday = ct
-	} else {
-		TableHolder.DailyCoinsEarned[userID] = 0
-	}
+	coinsEarnedToday := GetCoinsBeforeToday(userID)
 	earnedTodayField := &discordgo.MessageEmbedField{
 		Name:   "Josh Coins: Today",
 		Value:  fmt.Sprintf("You have earned `%d` josh coins today", coinsEarnedToday),
@@ -87,4 +77,23 @@ func GenAnnouncementEmbed(input_file string) (*discordgo.MessageEmbed, error) {
 	}
 
 	return &embed, nil
+}
+
+func GenJoshopEmbed(userID string) *discordgo.MessageEmbed {
+
+	fields := make([]*discordgo.MessageEmbedField, len(JoshopItems))
+	for i, x := range JoshopItems {
+		fields[i] = &discordgo.MessageEmbedField{
+			Name:  x.Name,
+			Value: x.Description,
+		}
+	}
+
+	embed := discordgo.MessageEmbed{
+		Title:       "Joshop",
+		Description: fmt.Sprintf("*Current Balance: %d*", GetTotalCoins(userID)),
+		Fields:      fields,
+	}
+
+	return &embed
 }
