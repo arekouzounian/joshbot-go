@@ -20,7 +20,7 @@ func GenHelpCommandEmbed() *discordgo.MessageEmbed {
 	embed := discordgo.MessageEmbed{
 		Title: "joshbot commands",
 		Description: `pay attention, josh. these are the commands you can use.
-		
+
 Make sure you always use commands in the DM. If you use it on the server it will count towards a non-josh. josh`,
 		Fields: fields,
 	}
@@ -41,7 +41,7 @@ func GenJoshCoinCommandEmbed(userID string) *discordgo.MessageEmbed {
 		Inline: false,
 	}
 
-	coinsEarnedToday := GetCoinsBeforeToday(userID)
+	coinsEarnedToday := GetDailyCoins(userID)
 	earnedTodayField := &discordgo.MessageEmbedField{
 		Name:   "Josh Coins: Today",
 		Value:  fmt.Sprintf("You have earned `%d` josh coins today", coinsEarnedToday),
