@@ -29,6 +29,20 @@ type JoshopItem struct {
 	Button      *discordgo.Button
 }
 
+// Structs for responding with a random gif
+type GifFormat struct {
+	URL string `json:"url"`
+}
+type MediaFormats struct {
+	Gif GifFormat `json:"gif"`
+}
+type Result struct {
+	MediaFormats MediaFormats `json:"media_formats"`
+}
+type TenorApiResponse struct {
+	Results []Result `json:"results"`
+}
+
 func NewJoshCoinTableHolder() *JoshCoinTableHolder {
 	new := &JoshCoinTableHolder{
 		DailyCoinsEarned: make(map[string]int),
