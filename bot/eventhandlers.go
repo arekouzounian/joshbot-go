@@ -29,11 +29,11 @@ func messageUpdate(session *discordgo.Session, message *discordgo.MessageUpdate)
 	}
 
 	if message.Content != "josh" {
-		log.Printf("Detected updated non-josh; deleting.")
+		log.Println("Detected updated non-josh; deleting.")
 
 		err := session.ChannelMessageDelete(message.ChannelID, message.ID)
 		if err != nil {
-			fmt.Printf("Error deleting edited message: %s", err.Error())
+			log.Printf("Error deleting edited message: %s", err.Error())
 		}
 	}
 
@@ -49,7 +49,7 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 
 	channel, err := session.Channel(message.ChannelID)
 	if err != nil {
-		log.Printf("Error getting channel: %s. The error might be related to a thread deletion event.", err.Error())
+		log.Printf("Error getting channel: %s. The error might be related to a thread deletion event.\n", err.Error())
 		return
 	}
 
@@ -57,8 +57,9 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 		roll := (rand.Int() % 100) + 1
 
 		if roll < PERCENT_CHANCE_TO_RESPOND {
+			log.Printf("Attempting to respond to %s's DM\n", message.Author.Username)
 			if err = sendUserRandomGif(session, message.Author.ID); err != nil {
-				log.Printf("Sending user random GIF failed: %v", err)
+				log.Printf("Sending user random GIF failed: %v\n", err)
 			}
 		}
 
@@ -68,7 +69,7 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 	if channel.IsThread() {
 		_, err := session.ChannelDelete(channel.ID)
 		if err != nil {
-			log.Printf("Error deleting thread channel: %s", err.Error())
+			log.Printf("Error deleting thread channel: %s\n", err.Error())
 		}
 		return
 	}
