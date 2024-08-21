@@ -245,8 +245,7 @@ func sendUserRandomGif(session *discordgo.Session, userID string) error {
 
 	key, exists := os.LookupEnv("TENOR_API_KEY")
 	if !exists {
-		log.Println("No TENOR_API_KEY environment variable found; unable to send random gifs to users.")
-		return nil
+		return fmt.Errorf("No TENOR_API_KEY environment variable found; unable to send random gifs to users.")
 	}
 
 	url := TENOR_BASE_URL + "&key=" + key + "&limit=1&random=true"
