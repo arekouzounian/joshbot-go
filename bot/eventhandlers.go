@@ -43,10 +43,7 @@ func messageUpdate(session *discordgo.Session, message *discordgo.MessageUpdate)
 func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate) {
 	// Checking if message should be ignored
 
-	if !DebugMode && message.GuildID != GUILD_ID {
-		return
-	}
-
+	// first check if it is a DM
 	channel, err := session.Channel(message.ChannelID)
 	if err != nil {
 		log.Printf("Error getting channel: %s. The error might be related to a thread deletion event.\n", err.Error())
@@ -66,15 +63,17 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 		return
 	}
 
+	// then check for the right guild
+	if (!DebugMode && message.GuildID != GUILD_ID) || message.Author.System {
+		return
+	}
+
+	// if it is the right guild but its a thread then delete
 	if channel.IsThread() {
 		_, err := session.ChannelDelete(channel.ID)
 		if err != nil {
 			log.Printf("Error deleting thread channel: %s\n", err.Error())
 		}
-		return
-	}
-
-	if message.Author.System {
 		return
 	}
 
