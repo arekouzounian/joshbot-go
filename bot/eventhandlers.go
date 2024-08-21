@@ -6,11 +6,16 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+)
+
+const (
+	PERCENT_CHANCE_TO_RESPOND = 20
 )
 
 // event handler for edited messages
@@ -19,11 +24,13 @@ func messageUpdate(session *discordgo.Session, message *discordgo.MessageUpdate)
 		return
 	}
 
-	if message.Author.System {
+	if message.Author.System || message.Author.Bot {
 		return
 	}
 
 	if message.Content != "josh" {
+		log.Printf("Detected updated non-josh; deleting.")
+
 		err := session.ChannelMessageDelete(message.ChannelID, message.ID)
 		if err != nil {
 			fmt.Printf("Error deleting edited message: %s", err.Error())
@@ -47,6 +54,14 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 	}
 
 	if channel.Type == discordgo.ChannelTypeDM {
+		roll := (rand.Int() % 100) + 1
+
+		if roll < PERCENT_CHANCE_TO_RESPOND {
+			if err = sendUserRandomGif(session, message.Author.ID); err != nil {
+				log.Printf("Sending user random GIF failed: %v", err)
+			}
+		}
+
 		return
 	}
 

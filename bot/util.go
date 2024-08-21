@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -237,4 +238,31 @@ func scheduleJobs(session *discordgo.Session) error {
 	log.Println("Created josh coin daily reset job successfully.")
 
 	return nil
+}
+
+func sendUserRandomGif(session *discordgo.Session, userID string) error {
+	const TENOR_BASE_URL = "https://tenor.googleapis.com/v2/search?q=josh"
+
+	key, exists := os.LookupEnv("TENOR_API_KEY")
+	if !exists {
+		log.Println("No TENOR_API_KEY environment variable found; unable to send random gifs to users.")
+		return nil
+	}
+
+	url := TENOR_BASE_URL + "&key=" + key + "&limit=1&random=true"
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return fmt.Errorf("Error in making HTTP request to %s: %v", url, err)
+	}
+	defer resp.Body.Close()
+
+	var apiResp TenorApiResponse
+	decoder := json.NewDecoder(resp.Body)
+
+	if err := decoder.Decode(&apiResp); err != nil {
+		return fmt.Errorf("Error in decoding JSON: %v", err)
+	}
+
+	return DMUser(session, userID, apiResp.Results[0].MediaFormats.Gif.URL)
 }
