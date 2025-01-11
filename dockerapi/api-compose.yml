@@ -2,7 +2,7 @@ services:
   api-compose:
     build: . 
     ports: 
-      - "6969:6969"
+      - "8080:8080"
     volumes: 
       - type: bind 
         source: ../db/
