@@ -56,6 +56,8 @@ def populate_tables(users_csv_path, log_csv_path, joshcoin_path, josh_otw_path):
     with open(log_csv_path, 'r') as f:
         r = csv.reader(f)
         for line in r: 
+            if len(line) != 3:
+                continue
             [timestamp, user_id, is_josh] = line
             curs.execute(f"INSERT INTO joshlog VALUES({timestamp}, '{user_id}', {is_josh})")
 
