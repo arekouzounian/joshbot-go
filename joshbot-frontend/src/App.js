@@ -4,7 +4,6 @@ import { Leaderboard } from './components/Leaderboard';
 import { StatHolder } from './components/StatHolder';
 
 const API_URL = "https://joshbot.xyz";
-// const API_URL = "http://localhost:6969";
 
 function App() {
   return (
