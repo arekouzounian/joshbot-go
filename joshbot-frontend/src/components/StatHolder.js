@@ -4,8 +4,8 @@ import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import Divider from '@mui/material/Divider';
 
-const AVG_ENDPOINT = "/api/v1/joshavg";
-const TIME_ENDPOINT = "/api/v1/lastjosh";
+const AVG_ENDPOINT = "/api/v2/joshavg";
+const TIME_ENDPOINT = "/api/v2/lastjosh";
 
 function secondsToStr(seconds) {
     let days = 0; 
@@ -54,7 +54,7 @@ function StatHolder(props) {
             fetch(props.API_URL+TIME_ENDPOINT)
                 .then((response) => response.json())
                 .then((data) => {
-                    // console.log(data);
+                    console.log(data);
                     setSeconds(secondsToStr(data));
                 }); 
         }
@@ -62,6 +62,7 @@ function StatHolder(props) {
         fetch(props.API_URL+AVG_ENDPOINT)
             .then((response) => response.json())
             .then((data) => {
+                console.log(data);
                 setAvg(parseFloat(data).toFixed(3));
             });
 
