@@ -16,7 +16,8 @@ def create_tables():
 
     # User table: user_id,username,avatar_url,josh_otw
     # removed josh, non-josh fields because we can calculate that from the josh log 
-    
+    # it's technically slower in the large case but I'll save the bridge crossing for when I'm crossing bridges
+
     curs.execute('CREATE TABLE IF NOT EXISTS users(user_id TEXT, username TEXT, avatar_url TEXT, josh_otw INTEGER)')
     
     # joshlog: timestamp,user_id,is_josh
@@ -49,7 +50,7 @@ def populate_tables(users_csv_path, log_csv_path, joshcoin_path, josh_otw_path):
         for line in r: 
             [user_id, username, avatar_url, josh, non_josh] = line
             josh_otw = 1 if josh_otw_id == user_id else 0
-            curs.execute(f"INSERT INTO users VALUES('{user_id}', '{username}', '{avatar_url}', {josh}, {non_josh}, {josh_otw})")
+            curs.execute(f"INSERT INTO users VALUES('{user_id}', '{username}', '{avatar_url}', {josh_otw})")
     
 
     with open(log_csv_path, 'r') as f:

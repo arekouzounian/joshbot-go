@@ -1,12 +1,17 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 import sqlite3
 import time 
+import random
+import atexit
 
 app = Flask(__name__)
 CORS(app)
 
 DB_LOC = '/db/josh.db'
+LEADERBOARD_COUNT = 5
 
 # TODO: get rid of string errors and just use 'Internal Server Error'
 
@@ -28,17 +33,6 @@ def missingFieldsErr(missing):
 @app.route("/")
 def hello():
     return "josh"
-
-@app.route("/test")
-def sql_test():
-    conn = sqlite3.connect(DB_LOC)
-    curs = conn.cursor()
-
-    obj = [row for row in curs.execute('SELECT * FROM users')]
-
-    conn.close()
-
-    return jsonify(obj)
 
 @app.route('/api/v2/newjosh', methods=['POST'])
 def newJosh():
@@ -62,12 +56,14 @@ def newJosh():
         conn = sqlite3.connect(DB_LOC)
         curs = conn.cursor()
         curs.execute(f"INSERT INTO joshlog VALUES({json['unixTimestamp']}, {json['userID']}, {json['joshInt']})")
-    except Exception as e:
+    except:
         rollback = True 
-        return str(e), 500
+        return 'Internal Server Error', 500
     finally:
         if not rollback:
             conn.commit()
+        else:
+            conn.rollback()
         conn.close()
     
 
@@ -94,12 +90,14 @@ def memberUpdate():
         conn = sqlite3.connect(DB_LOC)
         curs = conn.cursor()
         curs.execute(f"UPDATE users SET user_id='{json['userID']}',username='{json['username']}',avatar_url='{json['avatar']}' WHERE user_id={json['userID']}")
-    except Exception as e:
+    except:
         rollback = True
-        return str(e), 500
+        return 'Internal Server Error', 500
     finally:
         if not rollback:
             conn.commit()
+        else:
+            conn.rollback()
         conn.close()
     
     return 'Request success',200
@@ -118,8 +116,8 @@ def timeSinceLastJosh():
             return 'Internal Server Error', 500
         
         return str(now - int(res[0][0])), 200
-    except Exception as e:
-        return str(e), 500
+    except:
+        return 'Internal Server Error', 500
     finally:
         conn.close()
 
@@ -146,10 +144,140 @@ def joshAvg():
 
         return jsonify([josh_avg, non_josh_avg]), 200
         
-    except Exception as e:
-        return str(e), 500
+    except:
+        return 'Internal Server Error', 500
     finally:
         conn.close()
+
+@app.route('/api/v2/joshcount/<userid>')
+def getJoshes(userid):
+    try: 
+        conn = sqlite3.connect(DB_LOC)
+        curs = conn.cursor()
+        (josh_count) = curs.execute(f"SELECT COUNT(*) FROM joshlog WHERE user_id={userid} AND is_josh=1").fetchone()
+        if josh_count is None: 
+            return 'Internal Server Error', 500
+        
+        (non_josh_count) = curs.execute(f"SELECT COUNT(*) FROM joshlog WHERE user_id={userid} AND is_josh=0").fetchone()
+        if josh_count is None:
+            return 'Internal Server Error', 500
+
+        return jsonify([josh_count[0], non_josh_count[0]]), 200
+        
+    except:
+        return 'Internal Server Error', 500
+    finally:
+        conn.close()
+        
+@app.route('/api/v2/joshboard')
+def getLeaderboard():
+    try:
+        conn = sqlite3.connect(DB_LOC)
+        curs = conn.cursor()
+        # select user_id, count(*) as count_occurrences from joshlog where is_josh = 1 group by user_id order by count_occurrences desc limit 5;
+        rows = curs.execute(f'SELECT user_id, COUNT(*) AS count_occurrences FROM joshlog WHERE is_josh=1 GROUP BY user_id ORDER BY count_occurrences DESC LIMIT 5').fetchall()
+        
+        # should be [userID, username, avatarURL, joshCount, nonJoshCount]
+        # we can leave nonJoshCount field blank
+        for i in range(len(rows)):
+            [userID, joshes] = rows[i]
+            res = curs.execute(f'SELECT * FROM users WHERE user_id = {userID}').fetchone()
+            if res is None or len(res) < 4:
+                return 'Internal Server Error', 500
+            (_, username, avatar_url, _) = res
+
+            rows[i] = [userID, username, avatar_url, joshes, 0]
+        
+        return jsonify(rows), 200
+    except Exception as e:
+        return 'Internal Server Error', 500
+    finally:
+        conn.close()
+
+@app.route('/api/v2/joshofshame')
+def getWallOfShame():
+    try:
+        conn = sqlite3.connect(DB_LOC)
+        curs = conn.cursor()
+        # select user_id, count(*) as count_occurrences from joshlog where is_josh = 1 group by user_id order by count_occurrences desc limit 5;
+        rows = curs.execute(f'SELECT user_id, COUNT(*) AS count_occurrences FROM joshlog WHERE is_josh=0 GROUP BY user_id ORDER BY count_occurrences DESC LIMIT 5').fetchall()
+        # should be [userID, username, avatarURL, joshCount, nonJoshCount]
+        # we can leave nonJoshCount field blank
+        for i in range(len(rows)):
+            [userID, joshes] = rows[i]
+            print(userID, joshes)
+
+            res = curs.execute(f'SELECT * FROM users WHERE user_id={userID}').fetchone()
+            if res is None or len(res) < 4:
+                continue
+            (_, username, avatar_url, _) = res
+
+            rows[i] = [userID, username, avatar_url, joshes, 0]
+        
+        return jsonify(rows), 200
+    except Exception as e:
+        return 'Internal Server Error', 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/v2/joshotw')
+def getJoshOTW():
+    try:
+        conn = sqlite3.connect(DB_LOC)
+        curs = conn.cursor()
+        row = curs.execute('SELECT * FROM users WHERE josh_otw=2').fetchone()
+        if row is None:
+            return 'Internal Server Error', 500
+        
+        return jsonify(row), 200
+    except:
+        return 'Internal Server Error', 500
+    finally:
+        conn.close()
+
+
+def joshOfTheWeek():
+    rollback = False
+
+    # 0 if you haven't been josh of the week
+    # 1 if you've previously been josh of the week 
+    # 2 if you're currently josh of the week 
+
+    try:
+        conn = sqlite3.connect(DB_LOC)
+        curs = conn.cursor()
+        rows = curs.execute(f'SELECT * FROM users WHERE josh_otw=0').fetchall()
+
+        # everyone has been one, full reset 
+        if len(rows) < 1:
+            curs.execute(f'UPDATE users SET josh_otw=0 WHERE josh_otw=2 OR josh_otw=1')
+            rows = curs.execute(f'SELECT * FROM users WHERE josh_otw=0').fetchall()
+        
+        (user_id, _, _, _) = random.choice(rows)
+
+        # find curr josh, set to 1
+        curs.execute(f'UPDATE users SET josh_otw=1 WHERE josh_otw=2')
+        curs.execute(f'UPDATE users SET josh_otw=2 WHERE user_id={user_id}')
+
+            
+    except:
+        rollback = True
+    finally:
+        if not rollback:
+            conn.commit()
+        else:
+            conn.rollback()
+
+        conn.close()
+
+scheduler = BackgroundScheduler()
+everyWeekTrigger = CronTrigger(year='*',month='*',week='*',day_of_week='0',hour='0',minute='0',second='0')
+scheduler.add_job(joshOfTheWeek, trigger=everyWeekTrigger)
+scheduler.start()
+
+atexit.register(scheduler.shutdown)
+
 
 
 
