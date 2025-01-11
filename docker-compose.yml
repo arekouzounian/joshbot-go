@@ -1,6 +1,6 @@
 include:
   - dockerapi/api-compose.yml
-  - db/db-compose.yml
+
   # - api/api-compose.yml
   # - bot/bot-compose.yml
   # - joshbot-frontend/frontend-compose.yml

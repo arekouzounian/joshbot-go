@@ -3,6 +3,10 @@ services:
     build: . 
     ports: 
       - "6969:6969"
+    volumes: 
+      - type: bind 
+        source: ../db/
+        target: /db
 #     build: .
 #     ports:
 #       - "2222:2222"
