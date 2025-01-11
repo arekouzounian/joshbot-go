@@ -6,6 +6,8 @@ create sqlite3 tables, and populate them with the legacy joshbot info
 import sqlite3
 import csv, json
 
+BROKEN_LST = [467772565574778881]
+
 # Creates the following tables: 
 #   - users
 #   - coins
@@ -49,16 +51,26 @@ def populate_tables(users_csv_path, log_csv_path, joshcoin_path, josh_otw_path):
         r = csv.reader(f)
         for line in r: 
             [user_id, username, avatar_url, josh, non_josh] = line
+
+            if user_id in BROKEN_LST:
+                continue
+
             josh_otw = 1 if josh_otw_id == user_id else 0
             curs.execute(f"INSERT INTO users VALUES('{user_id}', '{username}', '{avatar_url}', {josh_otw})")
     
 
     with open(log_csv_path, 'r') as f:
         r = csv.reader(f)
+
+
         for line in r: 
             if len(line) != 3:
                 continue
             [timestamp, user_id, is_josh] = line
+
+            if user_id in BROKEN_LST:
+                continue
+
             curs.execute(f"INSERT INTO joshlog VALUES({timestamp}, '{user_id}', {is_josh})")
 
     with open(joshcoin_path, 'r') as f:

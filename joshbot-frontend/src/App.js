@@ -17,7 +17,7 @@ function App() {
           <JoshOTW API_URL={API_URL}></JoshOTW>
         </div>
 
-        <Leaderboard API_URL={API_URL} title={'Wall of Shame'} endpoint={'/api/v2/joshofshame'} keyIdx={1} valueIdx={4}></Leaderboard>
+        <Leaderboard API_URL={API_URL} title={'Wall of Shame'} endpoint={'/api/v2/joshofshame'} keyIdx={1} valueIdx={3}></Leaderboard>
       </div>
     </div>
   );
