@@ -228,7 +228,8 @@ def getJoshOTW():
         curs = conn.cursor()
         row = curs.execute('SELECT * FROM users WHERE josh_otw=2').fetchone()
         if row is None:
-            return 'Internal Server Error', 500
+            joshOfTheWeek() # create new one
+            row = curs.execute('SELECT * FROM users WHERE josh_otw=2').fetchone()
         
         return jsonify(row), 200
     except:
