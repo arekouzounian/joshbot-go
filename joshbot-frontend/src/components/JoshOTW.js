@@ -1,7 +1,7 @@
 import { Avatar } from "@mui/material";
 import { useState, useEffect } from "react";
 
-const JOSHOTW_ENDPOINT = "/api/v1/joshotw"; 
+const JOSHOTW_ENDPOINT = "/api/v2/joshotw"; 
 
 const USERNAME_IDX = 1; 
 const AVATAR_IDX = 2; 
@@ -15,8 +15,8 @@ function JoshOTW(props) {
         fetch(props.API_URL+JOSHOTW_ENDPOINT)
             .then((response) => response.json())
             .then((data) => {
-                setAvatar(data[0][AVATAR_IDX]);
-                setUsername(data[0][USERNAME_IDX]);
+                setAvatar(data[AVATAR_IDX]);
+                setUsername(data[USERNAME_IDX]);
                 console.log(data);
             });
     }, [props.API_URL]);

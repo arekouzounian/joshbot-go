@@ -23,7 +23,7 @@ function Leaderboard(props) {
         fetch(props.API_URL+props.endpoint)
             .then((response) => response.json())
             .then((data) => {
-                console.log(data)
+                console.log(data);
                 setUsers(data);
             });
     }, [props.API_URL, props.endpoint]);

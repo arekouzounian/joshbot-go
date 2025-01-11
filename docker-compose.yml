@@ -1,0 +1,19 @@
+include:
+  - dockerapi/api-compose.yml
+
+  # - api/api-compose.yml
+  # - bot/bot-compose.yml
+  # - joshbot-frontend/frontend-compose.yml
+
+# services:
+#   nginx:
+#     build: ./nginx
+#     ports:
+#       - "80:80"
+#       - "443:443"
+#     depends_on:
+#       - api-compose
+#       - frontend-compose
+
+# volumes: 
+# need to serialize bot data, api data
