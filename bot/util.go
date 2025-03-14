@@ -158,7 +158,7 @@ func dmJoshOtw(session *discordgo.Session) {
 		return
 	}
 
-	fields := respBodyData[0]
+	fields := respBodyData
 
 	err = DMUser(session, fields[0], "congratulations josh, you are now this week's josh of the week. https://joshbot.xyz")
 

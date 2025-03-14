@@ -19,7 +19,7 @@ const (
 )
 
 // event handler for edited messages
-func messageUpdate(session *discordgo.Session, message *discordgo.MessageUpdate) {
+func MessageUpdate(session *discordgo.Session, message *discordgo.MessageUpdate) {
 	if !DebugMode && message.GuildID != GUILD_ID {
 		return
 	}
@@ -40,7 +40,7 @@ func messageUpdate(session *discordgo.Session, message *discordgo.MessageUpdate)
 }
 
 // event handler for whenever a message is sent
-func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate) {
+func MessageCreate(session *discordgo.Session, message *discordgo.MessageCreate) {
 	// Checking if message should be ignored
 
 	// first check if it is a DM
@@ -139,17 +139,17 @@ func messageCreate(session *discordgo.Session, message *discordgo.MessageCreate)
 
 // For our purposes, this event requires the same work as the user update event.
 // This function will simply call the userUpdate()
-func userJoin(session *discordgo.Session, newUser *discordgo.GuildMemberAdd) {
+func UserJoin(session *discordgo.Session, newUser *discordgo.GuildMemberAdd) {
 	cast := discordgo.GuildMemberUpdate{
 		Member: newUser.Member,
 	}
 
-	userUpdate(session, &cast)
+	UserUpdate(session, &cast)
 }
 
 // When a user update event is generated, some information about them is changed/new
 // We make sure they have the right name/role, then push changes to the API
-func userUpdate(session *discordgo.Session, update *discordgo.GuildMemberUpdate) {
+func UserUpdate(session *discordgo.Session, update *discordgo.GuildMemberUpdate) {
 	if !DebugMode && update.GuildID != GUILD_ID {
 		return
 	}

@@ -79,10 +79,10 @@ func main() {
 	// https://discord.com/developers/docs/topics/gateway#gateway-intents
 	dg.Identify.Intents = discordgo.IntentGuildMessages | discordgo.IntentGuildMembers | discordgo.IntentsDirectMessages
 
-	dg.AddHandler(messageCreate)
-	dg.AddHandler(userJoin)
-	dg.AddHandler(userUpdate)
-	dg.AddHandler(messageUpdate)
+	dg.AddHandler(MessageCreate)
+	dg.AddHandler(UserJoin)
+	dg.AddHandler(UserUpdate)
+	dg.AddHandler(MessageUpdate)
 	dg.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		var name string
 		if i.Type == discordgo.InteractionApplicationCommand {
