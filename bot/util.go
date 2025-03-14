@@ -149,18 +149,18 @@ func dmJoshOtw(session *discordgo.Session) {
 	}
 	defer resp.Body.Close()
 
-	var respBodyData [][]string
+	var respBodyData []string
 
 	decoder := json.NewDecoder(resp.Body)
 	err = decoder.Decode(&respBodyData)
 	if err != nil {
-		log.Printf("Error decoding json body data: %s", err.Error())
+		log.Printf("Error decoding json body data in joshotw: %s", err.Error())
 		return
 	}
 
 	fields := respBodyData[0]
 
-	err = DMUser(session, fields[0], "congratulations josh, you are now this week's josh of the week. http://joshbot.xyz")
+	err = DMUser(session, fields[0], "congratulations josh, you are now this week's josh of the week. https://joshbot.xyz")
 
 	if err == nil {
 		log.Printf("Sent congratulatory message to user %s", fields[1])
