@@ -142,30 +142,32 @@ func DMUserEmbed(session *discordgo.Session, userID string, embed *discordgo.Mes
 // Sends a DM to the Josh of the Week.
 // Any failures will be logged, but won't be fatal.
 func dmJoshOtw(session *discordgo.Session) {
-	resp, err := http.Get(API_URL + JOSH_OTW_ENDPOINT)
+	// resp, err := http.Get(API_URL + JOSH_OTW_ENDPOINT)
+	resp, err := http.Get("http://joshbot.xyz/api/v2/joshotw")
 	if err != nil {
 		log.Printf("Error getting josh of the week: %s", err.Error())
 		return
 	}
 	defer resp.Body.Close()
 
-	var respBodyData []string
+	var fields []interface{}
 
 	decoder := json.NewDecoder(resp.Body)
-	err = decoder.Decode(&respBodyData)
+	err = decoder.Decode(&fields)
 	if err != nil {
 		log.Printf("Error decoding json body data in joshotw: %s", err.Error())
 		return
 	}
 
-	fields := respBodyData
+	userID := fields[0].(string)
+	userName := fields[1].(string)
 
-	err = DMUser(session, fields[0], "congratulations josh, you are now this week's josh of the week. https://joshbot.xyz")
+	err = DMUser(session, userID, "congratulations josh, you are now this week's josh of the week. https://joshbot.xyz")
 
 	if err == nil {
-		log.Printf("Sent congratulatory message to user %s", fields[1])
+		log.Printf("Sent congratulatory message to user %s", userName)
 	} else {
-		log.Printf("Error sending dm to user %s: %s", fields[1], err.Error())
+		log.Printf("Error sending dm to user %s: %s", userName, err.Error())
 	}
 }
 

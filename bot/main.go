@@ -14,6 +14,7 @@ import (
 
 var (
 	Token             string
+	MsgJoshDebug      bool
 	DebugMode         bool
 	SlashCommandDebug bool
 	AnnouncementMode  bool
@@ -43,6 +44,7 @@ const (
 func init() {
 	flag.StringVar(&Token, "t", "", "Bot Token")
 	flag.BoolVar(&DebugMode, "d", false, "sets the bot to debug mode")
+	flag.BoolVar(&MsgJoshDebug, "mj", false, "messages the josh of the week and then immediately exits.")
 	flag.BoolVar(&SlashCommandDebug, "sd", false, "sets the bot to slash command debug mode")
 	flag.BoolVar(&GenTableMode, "gentable", false, "will use the bot to generate user table and josh log table, then exits.")
 	flag.BoolVar(&RmCmdMode, "rmcmd", false, "will delete all registered slash commands, then exits.")
@@ -158,6 +160,10 @@ func main() {
 		}
 
 		fmt.Println("Announcements sent successfully.")
+		return
+	} else if MsgJoshDebug {
+		dmJoshOtw(dg)
+		fmt.Println("Messaged josh of the week. Exiting...")
 		return
 	}
 
