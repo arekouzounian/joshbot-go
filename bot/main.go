@@ -13,25 +13,35 @@ import (
 )
 
 var (
-	Token             string
+	// gotten from the discord dev portal. should always be passed in, never hardcoded.
+	Token string
+
 	MsgJoshDebug      bool
 	DebugMode         bool
 	SlashCommandDebug bool
-	AnnouncementMode  bool
-	AnnouncementFile  string
-	GenTableMode      bool
-	RmCmdMode         bool
-	LogFile           string
-	LastMsg           *discordgo.Message
-	Scheduler         gocron.Scheduler
+
+	// sends out an announcement to every josh using a given file, then exits.
+	AnnouncementMode bool
+	AnnouncementFile string
+
+	// Will dump tables into CSVs for migrating, then exit.
+	GenTableMode bool
+
+	// Deletes all registered slash commands then exits.
+	RmCmdMode bool
+
+	LogFile   string
+	LastMsg   *discordgo.Message
+	Scheduler gocron.Scheduler
 )
 
 // hardcoded server ID; allows testing on other server
 // might be a better way to do this
 // if the bot is always going to be on the same server as api,
-// can change API_URL -> http://localhost:6969
+// can change API_URL -> http://localhost:8080
+
 const (
-	DOUBLE_JOSH_SPAN  = 12
+	DOUBLE_JOSH_SPAN  = 12 // number of hours before a double josh is allowed
 	GUILD_ID          = "715798257661509743"
 	JOSH_ROLE_ID      = "716065561385238589"
 	JOSH_CHANNEL_ID   = "715798258190123031"
@@ -146,11 +156,6 @@ func main() {
 			if user.User.Bot {
 				continue
 			}
-
-			// for testing
-			// if user.User.ID != "MY USER ID FOR TESTING" {
-			// 	continue
-			// }
 
 			err := DMUserEmbed(dg, user.User.ID, embed)
 			if err != nil {
